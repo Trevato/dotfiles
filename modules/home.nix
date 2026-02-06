@@ -39,7 +39,7 @@
       glog = "git log --oneline --graph --decorate -20";
 
       # Nix
-      nrs = "sudo darwin-rebuild switch --flake ~/dotfiles";
+      nrs = "nix flake update nixpkgs --flake ~/dotfiles && sudo darwin-rebuild switch --flake ~/dotfiles";
       nfu = "nix flake update";
 
       # Docker
