@@ -23,7 +23,55 @@
         extensions.fzf-native.enable = true;
       };
       treesitter.enable = true;
+      treesitter-textobjects = {
+        enable = true;
+        settings = {
+          select = {
+            enable = true;
+            lookahead = true;
+            keymaps = {
+              "af" = "@function.outer";
+              "if" = "@function.inner";
+              "ac" = "@class.outer";
+              "ic" = "@class.inner";
+              "aa" = "@parameter.outer";
+              "ia" = "@parameter.inner";
+            };
+          };
+          move = {
+            enable = true;
+            set_jumps = true;
+            goto_next_start = {
+              "]m" = "@function.outer";
+              "]]" = "@class.outer";
+            };
+            goto_next_end = {
+              "]M" = "@function.outer";
+              "][" = "@class.outer";
+            };
+            goto_previous_start = {
+              "[m" = "@function.outer";
+              "[[" = "@class.outer";
+            };
+            goto_previous_end = {
+              "[M" = "@function.outer";
+              "[]" = "@class.outer";
+            };
+          };
+          swap = {
+            enable = true;
+            swap_next = {
+              "<leader>a" = "@parameter.inner";
+            };
+            swap_previous = {
+              "<leader>A" = "@parameter.inner";
+            };
+          };
+        };
+      };
       web-devicons.enable = true;
+      bufferline.enable = true;
+      colorizer.enable = true;
 
       # LSP
       lsp = {
@@ -36,6 +84,7 @@
           ruff.enable = true;
         };
       };
+      fidget.enable = true;
 
       # Auto-completion
       cmp = {
@@ -69,11 +118,18 @@
         settings.current_line_blame = true;
       };
       lazygit.enable = true;
+      diffview.enable = true;
 
       # Quality of life
       which-key.enable = true;
       indent-blankline.enable = true;
       nvim-autopairs.enable = true;
+      nvim-surround.enable = true;
+      ts-context-commentstring.enable = true;
+      mini = {
+        enable = true;
+        modules.ai = { };
+      };
 
       # Navigation
       neo-tree = {
@@ -165,6 +221,13 @@
     };
 
     keymaps = [
+      # Clear search highlights
+      {
+        mode = "n";
+        key = "<Esc>";
+        action = "<cmd>nohlsearch<cr>";
+        options.desc = "Clear search highlights";
+      }
       # Format
       {
         mode = "n";
@@ -309,7 +372,11 @@
       }
       # Flash
       {
-        mode = [ "n" "x" "o" ];
+        mode = [
+          "n"
+          "x"
+          "o"
+        ];
         key = "s";
         action.__raw = "function() require('flash').jump() end";
         options.desc = "Flash jump";
@@ -359,11 +426,22 @@
       shiftwidth = 2;
       clipboard = "unnamedplus";
       undofile = true;
+      ignorecase = true;
+      smartcase = true;
+      scrolloff = 8;
+      signcolumn = "yes";
+      cursorline = true;
+      splitbelow = true;
+      splitright = true;
     };
 
     highlightOverride = {
-      LineNr = { fg = "#7f849c"; };         # overlay1 - visible on transparent
-      CursorLineNr = { fg = "#cdd6f4"; };   # text - bright for current line
+      LineNr = {
+        fg = "#7f849c";
+      }; # overlay1 - visible on transparent
+      CursorLineNr = {
+        fg = "#cdd6f4";
+      }; # text - bright for current line
     };
   };
 }
