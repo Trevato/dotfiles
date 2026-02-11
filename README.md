@@ -34,7 +34,7 @@ My macOS configuration — nix-darwin + home-manager for a fully declarative dev
    ```
 
 5. **Remove my stuff** you don't need:
-   - `modules/minecraft.nix` — Minecraft server
+   - `modules/minecraft.nix` — Prism Launcher + JDK
    - `modules/secrets.nix` and `secrets/` — my encrypted keys
    - SSH config in `modules/home.nix` — my machines
 

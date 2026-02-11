@@ -11,7 +11,7 @@ modules/
   darwin.nix                 # System packages, services
   home.nix                   # User environment, shell, tools
   nixvim.nix                 # Neovim configuration
-  minecraft.nix              # Minecraft server module
+  minecraft.nix              # Prism Launcher + JDK
   secrets.nix                # Agenix secrets
 secrets/
   *.age                      # Encrypted secrets
