@@ -76,6 +76,46 @@
       nvim-autopairs.enable = true;
 
       # Navigation
+      neo-tree = {
+        enable = true;
+        settings = {
+          filesystem = {
+            follow_current_file.enabled = true;
+            use_libuv_file_watcher = true;
+            filtered_items = {
+              visible = true;
+              hide_dotfiles = false;
+              hide_gitignored = false;
+            };
+          };
+          window = {
+            position = "left";
+            width = 35;
+            mappings = {
+              "<space>" = "none";
+            };
+          };
+          default_component_configs = {
+            indent = {
+              with_expanders = true;
+            };
+            git_status = {
+              symbols = {
+                added = "";
+                modified = "";
+                deleted = "";
+                renamed = "➜";
+                untracked = "★";
+                ignored = "◌";
+                unstaged = "✗";
+                staged = "✓";
+                conflict = "";
+              };
+            };
+          };
+        };
+      };
+
       oil = {
         enable = true;
         settings.view_options.show_hidden = true;
@@ -188,6 +228,19 @@
         key = "<leader>gg";
         action = "<cmd>LazyGit<cr>";
         options.desc = "LazyGit";
+      }
+      # Neo-tree
+      {
+        mode = "n";
+        key = "<leader>e";
+        action = "<cmd>Neotree toggle<cr>";
+        options.desc = "Toggle file tree";
+      }
+      {
+        mode = "n";
+        key = "<leader>ge";
+        action = "<cmd>Neotree git_status toggle<cr>";
+        options.desc = "Git status tree";
       }
       # Oil
       {
