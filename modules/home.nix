@@ -165,15 +165,6 @@
         undo = "reset --soft HEAD~1";
       };
     };
-    includes = [
-      {
-        condition = "gitdir:~/projects/inception/";
-        contents = {
-          user.name = "Trevor Dobbertin";
-          user.email = "tdobbertin@inceptionllc.com";
-        };
-      }
-    ];
   };
 
   programs.delta = {
