@@ -1,85 +1,65 @@
-# nix-darwin-config
+# dotfiles
 
-Unified Nix configuration for my Mac and VXRail homelab server. One repo, two machines, declarative everything.
+My macOS configuration — nix-darwin + home-manager for a fully declarative dev environment.
 
-## Machines
+## What's included
 
-### otavert-mac (macOS)
-Daily driver. nix-darwin + home-manager for dev tools, Neovim, Homebrew casks, and a Minecraft server because why not.
+- **Shell**: zsh with starship, fzf, zoxide, atuin
+- **Editor**: Neovim via nixvim
+- **Git**: delta, lazygit, sensible defaults
+- **Terminal**: ghostty, zellij
+- **Tools**: direnv, eza, bat, ripgrep, fd, yazi, btop
 
-### otavert-vxrail (NixOS)
-Dell VXRail node repurposed as a homelab — 2x Xeon Gold 6230, 256GB RAM, running k3s. Hosts a self-hosted web platform for shipping side projects without touching Vercel or GitHub.
+## Make it yours
 
-## The Platform
+1. **Fork/clone** this repo
 
-A one-command workflow for deploying Next.js apps to my own infrastructure:
+2. **Update the hostname** in `flake.nix`:
+   ```nix
+   darwinConfigurations."your-hostname" = darwin.lib.darwinSystem { ... };
+   ```
 
-```
-push to Gitea → build Docker image → deploy to k3s → live at *.product-garden.com
-```
+3. **Update user details** in `modules/home.nix`:
+   ```nix
+   home.homeDirectory = "/Users/your-username";
+   programs.git.settings.user.name = "your-name";
+   programs.git.settings.user.email = "your@email.com";
+   ```
 
-### Quick start (on the server)
+4. **Update the host config** in `hosts/mac.nix`:
+   ```nix
+   networking.hostName = "your-hostname";
+   users.users.your-username = { ... };
+   home-manager.users.your-username = import ../modules/home.nix;
+   ```
+
+5. **Remove my stuff** you don't need:
+   - `modules/minecraft.nix` — Minecraft server
+   - `modules/secrets.nix` and `secrets/` — my encrypted keys
+   - SSH config in `modules/home.nix` — my machines
+
+6. **Rebuild**:
+   ```bash
+   darwin-rebuild switch --flake .#your-hostname
+   ```
+
+## Usage
 
 ```bash
-# Spin up a new project
-just new my-app
+# Rebuild after changes
+darwin-rebuild switch --flake .#your-hostname
 
-# What's running?
-just status
-just list
-
-# Tear it down
-just destroy my-app
+# Format nix files
+nix fmt
 ```
-
-`just new` scaffolds a Next.js app, creates a Gitea repo, builds a Docker image, pushes it to Gitea's container registry, deploys to k3s, and makes it publicly accessible through a Cloudflare Tunnel. One command, zero YAML editing.
-
-### Stack
-
-| Layer | Tool | What it does |
-|-------|------|-------------|
-| Source control | Gitea | Git hosting + OCI container registry |
-| CI/CD | Woodpecker CI | Gitea-native, builds on push |
-| Orchestration | k3s | Lightweight Kubernetes |
-| Ingress | Traefik v3 | Routes `*.product-garden.com` to pods |
-| TLS + DNS | Cloudflare Tunnel | Zero-config HTTPS, no certs to manage |
-| Storage | MinIO | S3-compatible object storage per project |
-| Database | PostgreSQL | Per-project databases via `platform create-db` |
-
-### How it works
-
-Every project gets:
-- A Gitea repository with CI/CD pipeline
-- A multi-stage Docker build (Next.js standalone output)
-- Kubernetes deployment, service, and ingress
-- A public URL at `https://<project>.product-garden.com`
-
-The platform infrastructure is declared as NixOS modules in `modules/platform/`. Traefik, Cloudflare Tunnel, Woodpecker CI, and MinIO are all deployed via k3s manifests that NixOS manages declaratively — `nixos-rebuild switch` and the cluster converges.
 
 ## Structure
 
 ```
-flake.nix              Entry point
-hosts/
-  mac.nix              macOS-specific config
-  vxrail.nix           Server config + platform secrets
+flake.nix            # Entry point
+hosts/mac.nix        # Host-specific config
 modules/
-  darwin.nix           macOS system (Homebrew, services)
-  nixos.nix            NixOS system (k3s, SSH, users)
-  home.nix             macOS home-manager
-  home-vxrail.nix      Server home-manager
-  nixvim.nix           Neovim config
-  platform/            Self-hosted web platform modules
-templates/             Project scaffolding (Dockerfile, k8s, CI)
-justfile               Platform management recipes
-```
-
-## Rebuilding
-
-```bash
-# macOS
-darwin-rebuild switch --flake .#otavert-mac
-
-# Server
-sudo nixos-rebuild switch --flake ~/nix-darwin-config#otavert-vxrail
+  darwin.nix         # System packages, services
+  home.nix           # User environment, shell, tools
+  nixvim.nix         # Neovim configuration
 ```
