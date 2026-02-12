@@ -17,12 +17,42 @@
 
     plugins = {
       # Core UI
-      lualine.enable = true;
+      lualine = {
+        enable = true;
+        settings.sections = {
+          lualine_b = [
+            "branch"
+            "diff"
+            "diagnostics"
+          ];
+          lualine_c = [
+            {
+              __unkeyed-1 = "filename";
+              path = 1;
+            }
+          ];
+          lualine_x = [ "filetype" ];
+        };
+      };
       telescope = {
         enable = true;
         extensions.fzf-native.enable = true;
+        extensions.ui-select.enable = true;
       };
-      treesitter.enable = true;
+      treesitter = {
+        enable = true;
+        settings.incremental_selection = {
+          enable = true;
+          keymaps = {
+            init_selection = "<C-space>";
+            node_incremental = "<C-space>";
+            scope_incremental = false;
+            node_decremental = "<bs>";
+          };
+        };
+      };
+      treesitter-context.enable = true;
+      nvim-ts-autotag.enable = true;
       treesitter-textobjects = {
         enable = true;
         settings = {
@@ -82,6 +112,9 @@
           nil_ls.enable = true;
           pyright.enable = true;
           ruff.enable = true;
+          jsonls.enable = true;
+          yamlls.enable = true;
+          lua_ls.enable = true;
         };
       };
       fidget.enable = true;
@@ -102,6 +135,10 @@
             "<CR>" = "cmp.mapping.confirm({ select = true })";
             "<C-Space>" = "cmp.mapping.complete()";
           };
+          window = {
+            completion.__raw = "cmp.config.window.bordered()";
+            documentation.__raw = "cmp.config.window.bordered()";
+          };
         };
       };
       cmp-nvim-lsp.enable = true;
@@ -121,7 +158,47 @@
       diffview.enable = true;
 
       # Quality of life
-      which-key.enable = true;
+      which-key = {
+        enable = true;
+        settings.spec = [
+          {
+            __unkeyed-1 = "<leader>f";
+            group = "find";
+          }
+          {
+            __unkeyed-1 = "<leader>g";
+            group = "git";
+          }
+          {
+            __unkeyed-1 = "<leader>gh";
+            group = "hunks";
+          }
+          {
+            __unkeyed-1 = "<leader>x";
+            group = "diagnostics";
+          }
+          {
+            __unkeyed-1 = "<leader>q";
+            group = "session";
+          }
+          {
+            __unkeyed-1 = "<leader>c";
+            group = "code";
+          }
+          {
+            __unkeyed-1 = "<leader>h";
+            group = "harpoon";
+          }
+          {
+            __unkeyed-1 = "<leader>b";
+            group = "buffer";
+          }
+          {
+            __unkeyed-1 = "<leader>r";
+            group = "refactor";
+          }
+        ];
+      };
       indent-blankline.enable = true;
       nvim-autopairs.enable = true;
       nvim-surround.enable = true;
@@ -130,6 +207,9 @@
         enable = true;
         modules.ai = { };
       };
+      illuminate.enable = true;
+      persistence.enable = true;
+      undotree.enable = true;
 
       # Navigation
       neo-tree = {
@@ -215,6 +295,27 @@
               "prettier"
             ];
             python = [ "ruff_format" ];
+            json = [
+              "prettierd"
+              "prettier"
+            ];
+            yaml = [
+              "prettierd"
+              "prettier"
+            ];
+            html = [
+              "prettierd"
+              "prettier"
+            ];
+            css = [
+              "prettierd"
+              "prettier"
+            ];
+            markdown = [
+              "prettierd"
+              "prettier"
+            ];
+            lua = [ "stylua" ];
           };
         };
       };
@@ -227,6 +328,130 @@
         key = "<Esc>";
         action = "<cmd>nohlsearch<cr>";
         options.desc = "Clear search highlights";
+      }
+      # Centered scrolling
+      {
+        mode = "n";
+        key = "<C-d>";
+        action = "<C-d>zz";
+        options.desc = "Scroll down centered";
+      }
+      {
+        mode = "n";
+        key = "<C-u>";
+        action = "<C-u>zz";
+        options.desc = "Scroll up centered";
+      }
+      {
+        mode = "n";
+        key = "n";
+        action = "nzzzv";
+        options.desc = "Next search centered";
+      }
+      {
+        mode = "n";
+        key = "N";
+        action = "Nzzzv";
+        options.desc = "Prev search centered";
+      }
+      # Move lines in visual mode
+      {
+        mode = "v";
+        key = "J";
+        action = ":m '>+1<CR>gv=gv";
+        options.desc = "Move selection down";
+      }
+      {
+        mode = "v";
+        key = "K";
+        action = ":m '<-2<CR>gv=gv";
+        options.desc = "Move selection up";
+      }
+      # Join lines (keep cursor)
+      {
+        mode = "n";
+        key = "J";
+        action = "mzJ`z";
+        options.desc = "Join lines (keep cursor)";
+      }
+      # Visual paste without yanking
+      {
+        mode = "v";
+        key = "p";
+        action = ''"_dP'';
+        options.desc = "Paste without yanking";
+      }
+      # Black hole x
+      {
+        mode = "n";
+        key = "x";
+        action = ''"_x'';
+        options.desc = "Delete char without yank";
+      }
+      # Diagnostics
+      {
+        mode = "n";
+        key = "[d";
+        action = "<cmd>lua vim.diagnostic.goto_prev()<cr>";
+        options.desc = "Previous diagnostic";
+      }
+      {
+        mode = "n";
+        key = "]d";
+        action = "<cmd>lua vim.diagnostic.goto_next()<cr>";
+        options.desc = "Next diagnostic";
+      }
+      # Buffer close
+      {
+        mode = "n";
+        key = "<leader>bd";
+        action = "<cmd>bdelete<cr>";
+        options.desc = "Close buffer";
+      }
+      # Window resize
+      {
+        mode = "n";
+        key = "<C-Up>";
+        action = "<cmd>resize +2<cr>";
+        options.desc = "Increase window height";
+      }
+      {
+        mode = "n";
+        key = "<C-Down>";
+        action = "<cmd>resize -2<cr>";
+        options.desc = "Decrease window height";
+      }
+      {
+        mode = "n";
+        key = "<C-Right>";
+        action = "<cmd>vertical resize +2<cr>";
+        options.desc = "Increase window width";
+      }
+      {
+        mode = "n";
+        key = "<C-Left>";
+        action = "<cmd>vertical resize -2<cr>";
+        options.desc = "Decrease window width";
+      }
+      # Undotree
+      {
+        mode = "n";
+        key = "<leader>u";
+        action = "<cmd>UndotreeToggle<cr>";
+        options.desc = "Toggle undo tree";
+      }
+      # Session
+      {
+        mode = "n";
+        key = "<leader>qs";
+        action.__raw = "function() require('persistence').load() end";
+        options.desc = "Restore session";
+      }
+      {
+        mode = "n";
+        key = "<leader>ql";
+        action.__raw = "function() require('persistence').load({ last = true }) end";
+        options.desc = "Restore last session";
       }
       # Format
       {
@@ -285,12 +510,62 @@
         action = "<cmd>Telescope buffers<cr>";
         options.desc = "Buffers";
       }
+      # Telescope extras
+      {
+        mode = "n";
+        key = "<leader>fr";
+        action = "<cmd>Telescope resume<cr>";
+        options.desc = "Resume last search";
+      }
+      {
+        mode = "n";
+        key = "<leader>fh";
+        action = "<cmd>Telescope help_tags<cr>";
+        options.desc = "Help tags";
+      }
+      {
+        mode = "n";
+        key = "<leader>fk";
+        action = "<cmd>Telescope keymaps<cr>";
+        options.desc = "Search keymaps";
+      }
       # Git
       {
         mode = "n";
         key = "<leader>gg";
         action = "<cmd>LazyGit<cr>";
         options.desc = "LazyGit";
+      }
+      # Gitsigns hunks
+      {
+        mode = "n";
+        key = "]c";
+        action.__raw = "function() if vim.wo.diff then vim.cmd.normal({']c', bang = true}) else require('gitsigns').nav_hunk('next') end end";
+        options.desc = "Next git hunk";
+      }
+      {
+        mode = "n";
+        key = "[c";
+        action.__raw = "function() if vim.wo.diff then vim.cmd.normal({'[c', bang = true}) else require('gitsigns').nav_hunk('prev') end end";
+        options.desc = "Previous git hunk";
+      }
+      {
+        mode = "n";
+        key = "<leader>ghs";
+        action = "<cmd>Gitsigns stage_hunk<cr>";
+        options.desc = "Stage hunk";
+      }
+      {
+        mode = "n";
+        key = "<leader>ghr";
+        action = "<cmd>Gitsigns reset_hunk<cr>";
+        options.desc = "Reset hunk";
+      }
+      {
+        mode = "n";
+        key = "<leader>ghp";
+        action = "<cmd>Gitsigns preview_hunk<cr>";
+        options.desc = "Preview hunk";
       }
       # Neo-tree
       {
@@ -420,12 +695,22 @@
       }
     ];
 
+    autoCmd = [
+      {
+        event = "TextYankPost";
+        callback.__raw = "function() vim.highlight.on_yank({ higroup = 'IncSearch', timeout = 200 }) end";
+      }
+    ];
+
     opts = {
       number = true;
       relativenumber = true;
       shiftwidth = 2;
       clipboard = "unnamedplus";
       undofile = true;
+      wrap = false;
+      tabstop = 2;
+      expandtab = true;
       ignorecase = true;
       smartcase = true;
       scrolloff = 8;

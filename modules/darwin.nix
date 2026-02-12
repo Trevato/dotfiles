@@ -22,6 +22,7 @@
     starship
     nixfmt-rfc-style
     prettierd
+    stylua
     direnv
     inputs.agenix.packages.${pkgs.system}.default
     tailscale
