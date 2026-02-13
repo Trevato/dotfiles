@@ -197,6 +197,10 @@
             __unkeyed-1 = "<leader>r";
             group = "refactor";
           }
+          {
+            __unkeyed-1 = "<leader>d";
+            group = "debug";
+          }
         ];
       };
       indent-blankline.enable = true;
@@ -267,6 +271,28 @@
       # Diagnostics and todos
       trouble.enable = true;
       todo-comments.enable = true;
+
+      # Experimental
+      dap.enable = true;
+      dap-ui.enable = true;
+      dap-virtual-text.enable = true;
+      zen-mode = {
+        enable = true;
+        settings.window = {
+          width = 120;
+          options = {
+            signcolumn = "no";
+            number = false;
+            relativenumber = false;
+            cursorline = false;
+          };
+        };
+      };
+      twilight.enable = true;
+      markdown-preview = {
+        enable = true;
+        settings.auto_close = 1;
+      };
 
       # Formatting
       conform-nvim = {
@@ -452,6 +478,57 @@
         key = "<leader>ql";
         action.__raw = "function() require('persistence').load({ last = true }) end";
         options.desc = "Restore last session";
+      }
+      # Debug
+      {
+        mode = "n";
+        key = "<leader>db";
+        action.__raw = "function() require('dap').toggle_breakpoint() end";
+        options.desc = "Toggle breakpoint";
+      }
+      {
+        mode = "n";
+        key = "<leader>dc";
+        action.__raw = "function() require('dap').continue() end";
+        options.desc = "Continue";
+      }
+      {
+        mode = "n";
+        key = "<leader>di";
+        action.__raw = "function() require('dap').step_into() end";
+        options.desc = "Step into";
+      }
+      {
+        mode = "n";
+        key = "<leader>do";
+        action.__raw = "function() require('dap').step_over() end";
+        options.desc = "Step over";
+      }
+      {
+        mode = "n";
+        key = "<leader>dO";
+        action.__raw = "function() require('dap').step_out() end";
+        options.desc = "Step out";
+      }
+      {
+        mode = "n";
+        key = "<leader>du";
+        action.__raw = "function() require('dapui').toggle() end";
+        options.desc = "Toggle DAP UI";
+      }
+      # Zen
+      {
+        mode = "n";
+        key = "<leader>z";
+        action = "<cmd>ZenMode<cr>";
+        options.desc = "Zen mode";
+      }
+      # Markdown preview
+      {
+        mode = "n";
+        key = "<leader>mp";
+        action = "<cmd>MarkdownPreviewToggle<cr>";
+        options.desc = "Markdown preview";
       }
       # Format
       {

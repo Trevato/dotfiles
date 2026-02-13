@@ -161,6 +161,39 @@ Undo history persists across sessions via undofile.
 
 Sessions save automatically when you quit. Reopen nvim in the same directory and restore.
 
+## Experimental
+
+These are Tier 3 plugins. Try them, keep what sticks, remove what doesn't.
+
+### Debug (DAP)
+
+| Key | Action |
+|-----|--------|
+| `Space db` | Toggle breakpoint |
+| `Space dc` | Continue |
+| `Space di` | Step into |
+| `Space do` | Step over |
+| `Space dO` | Step out |
+| `Space du` | Toggle DAP UI |
+
+Note: DAP needs debug adapters configured per language. The framework is installed but you'll need to add adapters (e.g. js-debug-adapter, debugpy) for your specific languages.
+
+### Zen Mode + Twilight
+
+| Key | Action |
+|-----|--------|
+| `Space z` | Toggle zen mode (120-char centered, no UI chrome) |
+
+Twilight automatically dims inactive code sections when zen mode is active.
+
+### Markdown Preview
+
+| Key | Action |
+|-----|--------|
+| `Space mp` | Toggle live markdown preview in browser |
+
+---
+
 ## Passive Features
 
 These work automatically with no keybinding:
