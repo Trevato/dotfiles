@@ -115,6 +115,7 @@
       font-family = "FiraCode Nerd Font Mono";
       font-size = 14;
       background-opacity = 0.7;
+      mouse-hide-while-typing = true;
     };
   };
 
