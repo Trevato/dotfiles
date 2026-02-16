@@ -49,5 +49,27 @@
 
   system.defaults.NSGlobalDomain.ApplePressAndHoldEnabled = false;
 
+  system.defaults.CustomUserPreferences = {
+    "com.apple.Safari" = {
+      # Developer tools
+      IncludeDevelopMenu = true;
+      WebKitDeveloperExtrasEnabledPreferenceKey = true;
+      "com.apple.Safari.ContentPageGroupIdentifier.WebKit2DeveloperExtrasEnabled" = true;
+
+      # Show full URL in address bar
+      ShowFullURLInSmartSearchField = true;
+
+      # Auto-hide toolbar in full screen
+      AutoShowToolbarInFullScreen = false;
+
+      # Show status bar overlay (hover link previews)
+      ShowOverlayStatusBar = true;
+    };
+
+    "com.apple.Safari.SandboxBroker" = {
+      ShowDevelopMenu = true;
+    };
+  };
+
   programs.zsh.enable = true;
 }
