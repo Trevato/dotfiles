@@ -47,5 +47,7 @@
       "discord"
     ];
 
+  system.defaults.NSGlobalDomain.ApplePressAndHoldEnabled = false;
+
   programs.zsh.enable = true;
 }
