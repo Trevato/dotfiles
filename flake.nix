@@ -12,6 +12,7 @@
     nix-direnv.url = "github:nix-community/nix-direnv";
     agenix.url = "github:ryantm/agenix";
     agenix.inputs.nixpkgs.follows = "nixpkgs";
+    claude-code.url = "github:sadjow/claude-code-nix";
     claude-config = {
       url = "github:trevato/.claude";
       flake = false;
@@ -34,6 +35,7 @@
       darwinConfigurations."otavert-mac" = nix-darwin.lib.darwinSystem {
         specialArgs = { inherit inputs self; };
         modules = [
+          { nixpkgs.overlays = [ inputs.claude-code.overlays.default ]; }
           agenix.darwinModules.default
           ./modules/darwin.nix
           ./modules/minecraft.nix
