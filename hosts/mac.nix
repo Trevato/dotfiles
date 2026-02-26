@@ -6,6 +6,9 @@
     docker
     colima
     lazydocker
+    kubectl
+    kubernetes-helm
+    k9s
     discord
     wireguard-tools
   ];

@@ -48,6 +48,15 @@
       dps = "docker ps";
       lzd = "lazydocker";
 
+      # Kubernetes
+      k = "kubectl";
+      kgp = "kubectl get pods";
+      kgs = "kubectl get svc";
+      kga = "kubectl get all";
+      kns = "kubectl config set-context --current --namespace";
+      h = "helm";
+      lzk = "k9s";
+
       # Quick
       v = "nvim";
       lg = "lazygit";
@@ -85,7 +94,7 @@
     enable = true;
     settings = {
       add_newline = false;
-      format = "$directory$git_branch$git_status$nix_shell$cmd_duration$character";
+      format = "$directory$git_branch$git_status$kubernetes$nix_shell$cmd_duration$character";
 
       character = {
         success_symbol = "[➜](bold green)";
@@ -97,6 +106,13 @@
         symbol = "❄️ ";
         style = "bold blue";
         format = "[$symbol]($style) ";
+      };
+
+      kubernetes = {
+        disabled = false;
+        symbol = "⎈ ";
+        style = "bold blue";
+        format = "[$symbol$context( \\($namespace\\))]($style) ";
       };
 
       directory = {
