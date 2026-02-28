@@ -8,6 +8,7 @@ My macOS configuration — nix-darwin + home-manager for a fully declarative dev
 - **Editor**: Neovim via nixvim
 - **Git**: delta, lazygit, sensible defaults
 - **Terminal**: ghostty, zellij
+- **Kubernetes**: colima + k3s, kubectl, helm, k9s ([guide](docs/kubernetes.md))
 - **Tools**: direnv, eza, bat, ripgrep, fd, yazi, btop
 
 ## Make it yours

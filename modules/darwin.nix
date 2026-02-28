@@ -36,6 +36,12 @@
 
   services.tailscale.enable = true;
 
+  # dnsmasq for local k8s wildcard DNS
+  services.dnsmasq.enable = true;
+  services.dnsmasq.addresses = {
+    "dev.test" = "192.168.64.3"; # Replace with your actual Colima IP
+  };
+
   nix.settings.experimental-features = "nix-command flakes";
   system.configurationRevision = self.rev or self.dirtyRev or null;
   system.stateVersion = 6;
