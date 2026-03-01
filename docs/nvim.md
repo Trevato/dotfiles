@@ -106,8 +106,8 @@ mini.ai additions:
 
 | Key | Action |
 |-----|--------|
-| `Space a` | Swap parameter with next |
-| `Space A` | Swap parameter with previous |
+| `Space sa` | Swap parameter with next |
+| `Space sA` | Swap parameter with previous |
 
 ## Scrolling
 
@@ -161,6 +161,46 @@ Undo history persists across sessions via undofile.
 
 Sessions save automatically when you quit. Reopen nvim in the same directory and restore.
 
+## Dashboard
+
+Opens automatically when nvim starts with no file arguments. A command center showing repo state and launching TUI tools.
+
+| Key | Context | Action |
+|-----|---------|--------|
+| `Space ;` | anywhere | Open dashboard |
+| `Tab` / `Shift+Tab` | dashboard | Cycle views (git: commits/branches/changes, docker: containers/images, kube: context/pods) |
+| `f` | dashboard | Find files (telescope) |
+| `g` | dashboard | Live grep (telescope) |
+| `r` | dashboard | Recent files |
+| `s` | dashboard | Restore session |
+| `e` | dashboard | Open file explorer |
+| `n` | dashboard | New file |
+| `l` | dashboard | Launch lazygit (fullscreen) |
+| `d` | dashboard | Launch lazydocker (fullscreen) |
+| `k` | dashboard | Launch k9s (fullscreen) |
+| `b` | dashboard | Launch btop (fullscreen) |
+| `c` | dashboard | Launch Claude Code |
+| `L` | dashboard | Launch lazygit from git section |
+| `D` | dashboard | Launch lazydocker from docker section |
+| `K` | dashboard | Launch k9s from kube section |
+| `q` | dashboard | Quit |
+
+Right pane shows async terminal sections (git, docker, kubernetes) with TTL caching. Sections only appear when the relevant tool is installed.
+
+## AI (Claude Code)
+
+Full IDE integration via WebSocket MCP protocol. Claude sees your editor state, can propose diffs, and understands file context.
+
+| Key | Action |
+|-----|--------|
+| `Space ac` | Toggle Claude Code terminal |
+| `Space af` | Focus / smart-toggle Claude |
+| `Space as` | Send selection to Claude (normal + visual) |
+| `Space ar` | Resume last Claude session |
+| `Space am` | Select Claude model |
+| `Space ab` | Add current buffer to Claude context |
+| `Space aa` | Add file from neo-tree to Claude context |
+
 ## Experimental
 
 These are Tier 3 plugins. Try them, keep what sticks, remove what doesn't.
@@ -209,6 +249,9 @@ These work automatically with no keybinding:
 - **format on save** -- conform runs on every save
 - **autopairs** -- brackets/quotes auto-close
 - **which-key** -- press Space and wait to see organized groups
+- **quickfile** -- instant file open before heavy plugins load
+- **notifier** -- improved vim.notify display
+- **claude code** -- WebSocket MCP protocol for real IDE awareness (auto-connects when claude CLI detects nvim)
 
 ## LSP Servers
 

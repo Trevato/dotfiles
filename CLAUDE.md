@@ -39,6 +39,8 @@ If you fork this repo, update these to match your identity:
 - `hosts/mac.nix` — hostname
 - `flake.nix` — `darwinConfigurations` key
 - `modules/secrets.nix` — agenix keys (or remove)
+- `modules/nixvim.nix` — dashboard header ASCII art and links
+- `modules/nixvim.nix` — dashboard TUI launcher commands (lazygit, lazydocker, k9s, btop, claude)
 
 ### Work git identity
 

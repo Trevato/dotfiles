@@ -1,4 +1,4 @@
-{ inputs, ... }:
+{ inputs, pkgs, ... }:
 {
   imports = [ inputs.nixvim.homeModules.nixvim ];
 
@@ -91,10 +91,10 @@
           swap = {
             enable = true;
             swap_next = {
-              "<leader>a" = "@parameter.inner";
+              "<leader>sa" = "@parameter.inner";
             };
             swap_previous = {
-              "<leader>A" = "@parameter.inner";
+              "<leader>sA" = "@parameter.inner";
             };
           };
         };
@@ -201,6 +201,14 @@
             __unkeyed-1 = "<leader>d";
             group = "debug";
           }
+          {
+            __unkeyed-1 = "<leader>s";
+            group = "swap";
+          }
+          {
+            __unkeyed-1 = "<leader>a";
+            group = "ai";
+          }
         ];
       };
       indent-blankline.enable = true;
@@ -214,6 +222,240 @@
       illuminate.enable = true;
       persistence.enable = true;
       undotree.enable = true;
+
+      # Dashboard
+      snacks = {
+        enable = true;
+        settings = {
+          quickfile.enabled = true;
+          notifier.enabled = true;
+          dashboard = {
+            enabled = true;
+            width = 72;
+            pane_gap = 4;
+            preset = {
+              header.__raw = ''
+                [[ ████████╗██████╗ ███████╗██╗   ██╗ █████╗ ████████╗ ██████╗
+                 ╚══██╔══╝██╔══██╗██╔════╝██║   ██║██╔══██╗╚══██╔══╝██╔═══██╗
+                    ██║   ██████╔╝█████╗  ██║   ██║███████║   ██║   ██║   ██║
+                    ██║   ██╔══██╗██╔══╝  ╚██╗ ██╔╝██╔══██║   ██║   ██║   ██║
+                    ██║   ██║  ██║███████╗ ╚████╔╝ ██║  ██║   ██║   ╚██████╔╝
+                    ╚═╝   ╚═╝  ╚═╝╚══════╝  ╚═══╝  ╚═╝  ╚═╝   ╚═╝    ╚═════╝
+                              trevato.dev  ·  github.com/trevato]]
+              '';
+              keys = [
+                {
+                  icon = " ";
+                  key = "f";
+                  desc = "Find file";
+                  action = ":Telescope find_files";
+                }
+                {
+                  icon = " ";
+                  key = "g";
+                  desc = "Live grep";
+                  action = ":Telescope live_grep";
+                }
+                {
+                  icon = " ";
+                  key = "r";
+                  desc = "Recent files";
+                  action = ":Telescope oldfiles";
+                }
+                {
+                  icon = " ";
+                  key = "s";
+                  desc = "Restore session";
+                  action.__raw = "function() require('persistence').load() end";
+                }
+                {
+                  icon = " ";
+                  key = "e";
+                  desc = "Explorer";
+                  action = ":Neotree toggle";
+                }
+                {
+                  icon = " ";
+                  key = "n";
+                  desc = "New file";
+                  action = ":ene | startinsert";
+                }
+                {
+                  icon = " ";
+                  key = "q";
+                  desc = "Quit";
+                  action = ":qa";
+                }
+              ];
+            };
+            sections = [
+              # ── Left pane ──
+              {
+                section = "header";
+                pane = 1;
+              }
+              {
+                section = "keys";
+                title = "Quick Actions";
+                icon = " ";
+                pane = 1;
+                gap = 1;
+                padding = 1;
+              }
+              # TUI launchers
+              {
+                title = "Launchers";
+                icon = " ";
+                pane = 1;
+                padding = 1;
+              }
+              {
+                icon = "󰒲 ";
+                key = "l";
+                desc = "lazygit";
+                action.__raw = "function() _G.dash_launch('lazygit') end";
+                pane = 1;
+                indent = 2;
+              }
+              {
+                icon = " ";
+                key = "d";
+                desc = "lazydocker";
+                action.__raw = "function() _G.dash_launch('lazydocker') end";
+                pane = 1;
+                indent = 2;
+              }
+              {
+                icon = "⎈ ";
+                key = "k";
+                desc = "k9s";
+                action.__raw = "function() _G.dash_launch('k9s') end";
+                pane = 1;
+                indent = 2;
+              }
+              {
+                icon = " ";
+                key = "b";
+                desc = "btop";
+                action.__raw = "function() _G.dash_launch('btop') end";
+                pane = 1;
+                indent = 2;
+              }
+              {
+                icon = " ";
+                key = "c";
+                desc = "Claude Code";
+                action.__raw = "function() vim.cmd('ClaudeCode') end";
+                pane = 1;
+                indent = 2;
+              }
+              {
+                section = "recent_files";
+                title = "Recent Files";
+                icon = " ";
+                pane = 1;
+                limit = 5;
+                cwd = true;
+                indent = 2;
+                padding = 1;
+              }
+              # ── Right pane: Git (3 views) ──
+              {
+                section = "terminal";
+                cmd = "git log --oneline --decorate -8 2>/dev/null";
+                title = "Recent Commits";
+                icon = " ";
+                height = 10;
+                pane = 2;
+                indent = 2;
+                padding = 1;
+                ttl = 300;
+                key = "L";
+                action.__raw = "function() _G.dash_launch('lazygit') end";
+                enabled.__raw = "function() return _G.dash.git == 1 and Snacks.git.get_root() ~= nil end";
+              }
+              {
+                section = "terminal";
+                cmd = "git branch -a --sort=-committerdate 2>/dev/null | head -10";
+                title = "Branches";
+                icon = " ";
+                height = 10;
+                pane = 2;
+                indent = 2;
+                padding = 1;
+                ttl = 300;
+                enabled.__raw = "function() return _G.dash.git == 2 and Snacks.git.get_root() ~= nil end";
+              }
+              {
+                section = "terminal";
+                cmd = "git diff --stat 2>/dev/null; echo ''; git status --short 2>/dev/null | head -8";
+                title = "Changes";
+                icon = " ";
+                height = 10;
+                pane = 2;
+                indent = 2;
+                padding = 1;
+                ttl = 300;
+                enabled.__raw = "function() return _G.dash.git == 3 and Snacks.git.get_root() ~= nil end";
+              }
+              # ── Right pane: Docker (2 views) ──
+              {
+                section = "terminal";
+                cmd = "docker ps --format 'table {{.Names}}\\t{{.Status}}' 2>/dev/null | head -8";
+                title = "Containers";
+                icon = " ";
+                height = 8;
+                pane = 2;
+                indent = 2;
+                padding = 1;
+                ttl = 120;
+                key = "D";
+                action.__raw = "function() _G.dash_launch('lazydocker') end";
+                enabled.__raw = "function() return _G.dash.docker == 1 and vim.fn.executable('docker') == 1 end";
+              }
+              {
+                section = "terminal";
+                cmd = "docker images --format 'table {{.Repository}}\\t{{.Tag}}\\t{{.Size}}' 2>/dev/null | head -8";
+                title = "Images";
+                icon = " ";
+                height = 8;
+                pane = 2;
+                indent = 2;
+                padding = 1;
+                ttl = 120;
+                enabled.__raw = "function() return _G.dash.docker == 2 and vim.fn.executable('docker') == 1 end";
+              }
+              # ── Right pane: Kubernetes (2 views) ──
+              {
+                section = "terminal";
+                cmd = "ctx=$(kubectl config current-context 2>/dev/null || echo 'none'); ns=$(kubectl config view --minify -o jsonpath='{.contexts[0].context.namespace}' 2>/dev/null || echo 'default'); echo \"$ctx · $ns\"";
+                title = "Kubernetes";
+                icon = "⎈ ";
+                height = 3;
+                pane = 2;
+                indent = 2;
+                padding = 1;
+                ttl = 120;
+                key = "K";
+                action.__raw = "function() _G.dash_launch('k9s') end";
+                enabled.__raw = "function() return _G.dash.kube == 1 and vim.fn.executable('kubectl') == 1 end";
+              }
+              {
+                section = "terminal";
+                cmd = "kubectl get pods --no-headers --request-timeout=3s 2>/dev/null | head -8";
+                title = "Pods";
+                icon = "⎈ ";
+                height = 8;
+                pane = 2;
+                indent = 2;
+                padding = 1;
+                ttl = 120;
+                enabled.__raw = "function() return _G.dash.kube == 2 and vim.fn.executable('kubectl') == 1 end";
+              }
+            ];
+          };
+        };
+      };
 
       # Navigation
       neo-tree = {
@@ -346,6 +588,53 @@
         };
       };
     };
+
+    extraPlugins = [
+      (pkgs.vimUtils.buildVimPlugin {
+        name = "claudecode-nvim";
+        src = pkgs.fetchFromGitHub {
+          owner = "coder";
+          repo = "claudecode.nvim";
+          rev = "v0.3.0";
+          hash = "sha256-sOBY2y/buInf+SxLwz6uYlUouDULwebY/nmDlbFbGa8=";
+        };
+      })
+    ];
+
+    extraConfigLua = ''
+      -- Dashboard state for cycling views
+      _G.dash = {
+        git = 1, git_max = 3,
+        docker = 1, docker_max = 2,
+        kube = 1, kube_max = 2,
+      }
+
+      function _G.dash_cycle(section, dir)
+        local max_val = _G.dash[section .. "_max"]
+        _G.dash[section] = ((_G.dash[section] - 1 + dir) % max_val) + 1
+      end
+
+      function _G.dash_cycle_all(dir)
+        _G.dash_cycle("git", dir)
+        _G.dash_cycle("docker", dir)
+        _G.dash_cycle("kube", dir)
+        Snacks.dashboard()
+      end
+
+      function _G.dash_launch(cmd)
+        Snacks.terminal(cmd, {
+          win = { position = "float", width = 0.9, height = 0.9 },
+        })
+      end
+
+      -- Claude Code
+      require("claudecode").setup({
+        terminal = {
+          split_side = "right",
+          split_width_percentage = 0.40,
+        },
+      })
+    '';
 
     keymaps = [
       # Clear search highlights
@@ -770,12 +1059,83 @@
         action.__raw = "function() require'harpoon':list():select(4) end";
         options.desc = "Harpoon file 4";
       }
+      # Dashboard
+      {
+        mode = "n";
+        key = "<leader>;";
+        action.__raw = "function() Snacks.dashboard() end";
+        options.desc = "Dashboard";
+      }
+      # Claude Code
+      {
+        mode = "n";
+        key = "<leader>ac";
+        action = "<cmd>ClaudeCode<cr>";
+        options.desc = "Toggle Claude";
+      }
+      {
+        mode = "n";
+        key = "<leader>af";
+        action = "<cmd>ClaudeCodeFocus<cr>";
+        options.desc = "Focus Claude";
+      }
+      {
+        mode = "n";
+        key = "<leader>ar";
+        action = "<cmd>ClaudeCode --resume<cr>";
+        options.desc = "Resume Claude";
+      }
+      {
+        mode = "n";
+        key = "<leader>am";
+        action = "<cmd>ClaudeCodeSelectModel<cr>";
+        options.desc = "Select model";
+      }
+      {
+        mode = "n";
+        key = "<leader>ab";
+        action = "<cmd>ClaudeCodeAdd %<cr>";
+        options.desc = "Add buffer to Claude";
+      }
+      {
+        mode = [
+          "n"
+          "v"
+        ];
+        key = "<leader>as";
+        action = "<cmd>ClaudeCodeSend<cr>";
+        options.desc = "Send to Claude";
+      }
     ];
 
     autoCmd = [
       {
         event = "TextYankPost";
         callback.__raw = "function() vim.highlight.on_yank({ higroup = 'IncSearch', timeout = 200 }) end";
+      }
+      {
+        event = "FileType";
+        pattern = "neo-tree";
+        callback.__raw = ''
+          function()
+            vim.keymap.set('n', '<leader>aa', '<cmd>ClaudeCodeTreeAdd<cr>',
+              { buffer = true, desc = 'Add file to Claude' })
+          end
+        '';
+      }
+      {
+        event = "FileType";
+        pattern = "snacks_dashboard";
+        callback.__raw = ''
+          function()
+            local buf = vim.api.nvim_get_current_buf()
+            local map = function(key, fn, desc)
+              vim.keymap.set('n', key, fn, { buffer = buf, desc = desc })
+            end
+            map('<Tab>', function() _G.dash_cycle_all(1) end, 'Cycle views')
+            map('<S-Tab>', function() _G.dash_cycle_all(-1) end, 'Cycle views back')
+          end
+        '';
       }
     ];
 
@@ -804,6 +1164,25 @@
       CursorLineNr = {
         fg = "#cdd6f4";
       }; # text - bright for current line
+      SnacksDashboardHeader = {
+        fg = "#cba6f7";
+      }; # mauve
+      SnacksDashboardIcon = {
+        fg = "#89b4fa";
+      }; # blue
+      SnacksDashboardKey = {
+        fg = "#a6e3a1";
+      }; # green
+      SnacksDashboardDesc = {
+        fg = "#cdd6f4";
+      }; # text
+      SnacksDashboardTitle = {
+        fg = "#f9e2af";
+        bold = true;
+      }; # yellow
+      SnacksDashboardFooter = {
+        fg = "#6c7086";
+      }; # overlay0
     };
   };
 }
