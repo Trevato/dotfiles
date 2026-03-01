@@ -8,7 +8,9 @@
     lazydocker
     kubectl
     kubernetes-helm
+    helmfile
     k9s
+    kustomize
     discord
     wireguard-tools
   ];

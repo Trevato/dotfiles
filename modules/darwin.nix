@@ -12,6 +12,7 @@
     gh
     curl
     jq
+    yq
     ripgrep
     tree
     lazygit
