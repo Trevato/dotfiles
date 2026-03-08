@@ -1,6 +1,6 @@
 # dotfiles
 
-My macOS configuration — nix-darwin + home-manager for a fully declarative dev environment.
+My personal configuration — nix-darwin (macOS) + standalone home-manager (Ubuntu) for a fully declarative dev environment.
 
 ## What's included
 
@@ -8,31 +8,38 @@ My macOS configuration — nix-darwin + home-manager for a fully declarative dev
 - **Editor**: Neovim via nixvim
 - **Git**: delta, lazygit, sensible defaults
 - **Terminal**: ghostty, zellij
-- **Kubernetes**: colima + k3s, kubectl, helm, k9s ([guide](docs/kubernetes.md))
+- **Kubernetes**: kubectl, helm, k9s (+ colima on macOS) ([guide](docs/kubernetes.md))
 - **Tools**: direnv, eza, bat, ripgrep, fd, yazi, btop
+
+## Platforms
+
+| Platform | Config type | Rebuild command |
+|----------|------------|-----------------|
+| macOS (aarch64) | nix-darwin | `darwin-rebuild switch --flake .#otavert-mac` |
+| Ubuntu (x86_64) | home-manager standalone | `home-manager switch --flake .#trevato@ubuntu` |
 
 ## Make it yours
 
 1. **Fork/clone** this repo
 
-2. **Update the hostname** in `flake.nix`:
+2. **Update the hostname/user** in `flake.nix`:
    ```nix
-   darwinConfigurations."your-hostname" = darwin.lib.darwinSystem { ... };
+   # macOS
+   darwinConfigurations."your-hostname" = ...;
+   # Ubuntu
+   homeConfigurations."you@ubuntu" = ...;
    ```
 
 3. **Update user details** in `modules/home.nix`:
    ```nix
-   home.homeDirectory = "/Users/your-username";
+   home.homeDirectory = "/Users/your-username";  # or /home/...
    programs.git.settings.user.name = "your-name";
    programs.git.settings.user.email = "your@email.com";
    ```
 
-4. **Update the host config** in `hosts/mac.nix`:
-   ```nix
-   networking.hostName = "your-hostname";
-   users.users.your-username = { ... };
-   home-manager.users.your-username = import ../modules/home.nix;
-   ```
+4. **Update the host configs**:
+   - `hosts/mac.nix` — macOS packages, system defaults
+   - `hosts/ubuntu.nix` — Linux packages, home directory
 
 5. **Remove my stuff** you don't need:
    - `modules/minecraft.nix` — Prism Launcher + JDK
@@ -41,14 +48,20 @@ My macOS configuration — nix-darwin + home-manager for a fully declarative dev
 
 6. **Rebuild**:
    ```bash
+   # macOS
    darwin-rebuild switch --flake .#your-hostname
+   # Ubuntu
+   home-manager switch --flake .#you@ubuntu
    ```
 
 ## Usage
 
 ```bash
-# Rebuild after changes
-darwin-rebuild switch --flake .#your-hostname
+# Rebuild after changes (macOS)
+darwin-rebuild switch --flake .#otavert-mac
+
+# Rebuild after changes (Ubuntu)
+home-manager switch --flake .#trevato@ubuntu
 
 # Format nix files
 nix fmt
@@ -57,10 +70,14 @@ nix fmt
 ## Structure
 
 ```
-flake.nix            # Entry point
-hosts/mac.nix        # Host-specific config
+flake.nix                # Entry point
+hosts/
+  mac.nix                # macOS host config
+  ubuntu.nix             # Ubuntu host config
 modules/
-  darwin.nix         # System packages, services
-  home.nix           # User environment, shell, tools
-  nixvim.nix         # Neovim configuration
+  darwin.nix             # macOS system packages, services
+  linux.nix              # Linux user packages
+  home.nix               # Shared user environment, shell, tools
+  home-linux.nix         # Linux overrides for home.nix
+  nixvim.nix             # Neovim configuration
 ```

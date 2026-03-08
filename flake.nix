@@ -1,5 +1,5 @@
 {
-  description = "Trevato's macOS personal configuration";
+  description = "Trevato's personal configuration — macOS + Ubuntu";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -30,6 +30,7 @@
     }:
     {
       formatter.aarch64-darwin = nixpkgs.legacyPackages.aarch64-darwin.nixfmt-rfc-style;
+      formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixfmt-rfc-style;
 
       # macOS (nix-darwin)
       darwinConfigurations."otavert-mac" = nix-darwin.lib.darwinSystem {
@@ -51,5 +52,21 @@
           }
         ];
       };
+
+      # Ubuntu (standalone home-manager)
+      homeConfigurations."trevato@ubuntu" =
+        let
+          pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        in
+        home-manager.lib.homeManagerConfiguration {
+          inherit pkgs;
+          extraSpecialArgs = { inherit inputs; };
+          modules = [
+            { nixpkgs.overlays = [ inputs.claude-code.overlays.default ]; }
+            ./modules/linux.nix
+            ./modules/home-linux.nix
+            ./hosts/ubuntu.nix
+          ];
+        };
     };
 }
