@@ -20,6 +20,10 @@ in
   # Silence the cosmetic release-mismatch check.
   home.enableNixpkgsReleaseCheck = false;
 
+  # The generated home-configuration.nix manpage embeds the nixpkgs store
+  # path without context (eval warning) and the reference lives online anyway.
+  manual.manpages.enable = false;
+
   # Portable dev toolbox — available on every machine, not just the Mac.
   home.packages = with pkgs; [
     gh
@@ -298,6 +302,8 @@ in
   programs.fzf = {
     enable = true;
     enableZshIntegration = true;
+    # atuin owns Ctrl-R; fzf keeps Ctrl-T (files) and Alt-C (cd)
+    historyWidget.command = "";
     defaultOptions = [
       "--height 40%"
       "--border"
