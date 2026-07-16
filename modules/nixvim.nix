@@ -15,7 +15,29 @@ in
   programs.nixvim = {
     enable = true;
     version.enableNixpkgsReleaseCheck = false; # tracking unstable; silence version-skew warning
-    globals.mapleader = " ";
+    globals = {
+      mapleader = " ";
+      # dadbod-ui: drawer sized like neo-tree, icons, auto-run table helpers on open
+      db_ui_use_nerd_fonts = 1;
+      db_ui_winwidth = 35;
+      db_ui_auto_execute_table_helpers = 1;
+      db_ui_show_help = 0; # `?` still toggles the cheatsheet
+      db_ui_use_nvim_notify = 1; # route messages through snacks notifier
+      # tables first — browsing a schema is the primary gesture
+      db_ui_drawer_sections = [
+        "schemas"
+        "new_query"
+        "buffers"
+        "saved_queries"
+      ];
+      # chevrons match neo-tree's expanders (oct-chevron down/right)
+      db_ui_icons.__raw = ''
+        {
+          expanded = "\u{f47c}",
+          collapsed = "\u{f460}",
+        }
+      '';
+    };
     defaultEditor = true;
 
     colorschemes.catppuccin = {
@@ -145,6 +167,16 @@ in
               RenderMarkdownH4Bg = { bg = colors.mantle, fg = colors.green };
               RenderMarkdownH5Bg = { bg = colors.mantle, fg = colors.sapphire };
               RenderMarkdownH6Bg = { bg = colors.mantle, fg = colors.lavender };
+              -- DBUI drawer: palette colors instead of the plugin's hardcoded greens
+              dbui_connection_source = { fg = colors.overlay0, italic = true },
+              dbui_connection_ok = { fg = colors.green },
+              dbui_connection_error = { fg = colors.red },
+              dbui_help = { fg = colors.overlay0, italic = true },
+              dbui_help_key = { fg = colors.green },
+              dbui_saved_query = { fg = colors.teal },
+              dbui_new_query = { fg = colors.mauve },
+              dbui_buffers = { fg = colors.peach },
+              dbui_tables = { fg = colors.sapphire },
               -- Dashboard
               SnacksDashboardHeader = { fg = colors.mauve },
               SnacksDashboardIcon = { fg = colors.blue },
@@ -447,6 +479,16 @@ in
               "snippets"
               "buffer"
             ];
+            per_filetype = {
+              sql = [
+                "dadbod"
+                "buffer"
+              ];
+            };
+            providers.dadbod = {
+              name = "Dadbod";
+              module = "vim_dadbod_completion.blink";
+            };
           };
         };
       };
@@ -461,6 +503,12 @@ in
       };
       lazygit.enable = true;
       diffview.enable = true;
+
+      # Database (dadbod) — SQLite files open as a browsable DB, see the
+      # BufReadCmd autocmd below
+      vim-dadbod.enable = true;
+      vim-dadbod-ui.enable = true;
+      vim-dadbod-completion.enable = true;
 
       # Quality of life
       which-key = {
@@ -949,6 +997,10 @@ in
       pkgs.vimPlugins.satellite-nvim
     ];
 
+    extraPackages = [
+      pkgs.sqlite # dadbod shells out to sqlite3
+    ];
+
     extraConfigLua = ''
       -- Floating per-window filenames (shows which split is which)
       require('incline').setup({
@@ -989,6 +1041,7 @@ in
           "lazy",
           "mason",
           "help",
+          "dbui",
         },
         handlers = {
           cursor = { enable = true, symbols = { "▶" } },
@@ -1505,6 +1558,13 @@ in
         action.__raw = "function() Snacks.dashboard() end";
         options.desc = "Dashboard";
       }
+      # Database
+      {
+        mode = "n";
+        key = "<leader>D";
+        action = "<cmd>DBUIToggle<cr>";
+        options.desc = "Database UI";
+      }
     ];
 
     autoCmd = [
@@ -1520,6 +1580,150 @@ in
             vim.opt_local.conceallevel = 2
             vim.opt_local.concealcursor = "nc"
             vim.opt_local.spell = true
+          end
+        '';
+      }
+      {
+        # SQLite files open as a browsable database (DBUI), not a binary dump.
+        # Non-SQLite .db files (checked via magic header) fall back to a plain read.
+        event = "BufReadCmd";
+        pattern = [
+          "*.db"
+          "*.sqlite"
+          "*.sqlite3"
+        ];
+        callback.__raw = ''
+          function(ev)
+            local path = vim.fn.fnamemodify(ev.file, ":p")
+            local f = io.open(path, "rb")
+            local header = f and f:read(16) or nil
+            if f then f:close() end
+            if header ~= "SQLite format 3\0" then
+              vim.cmd("silent keepalt read ++edit " .. vim.fn.fnameescape(path))
+              vim.api.nvim_buf_set_lines(ev.buf, 0, 1, false, {})
+              vim.bo[ev.buf].modified = false
+              return
+            end
+            local url = "sqlite:" .. path
+            -- one gesture can fire BufReadCmd twice (a picker window reopening
+            -- the file in a target window); a second toggle would re-collapse
+            local opening = vim.g._dbui_opening or {}
+            local now = vim.uv.now()
+            local debounced = opening[url] ~= nil and (now - opening[url]) < 2000
+            opening[url] = now
+            vim.g._dbui_opening = opening
+            local dbs = vim.g.dbs or {}
+            local known = false
+            for _, db in ipairs(dbs) do
+              if db.url == url then
+                known = true
+                break
+              end
+            end
+            if not known then
+              table.insert(dbs, { name = vim.fn.fnamemodify(path, ":t"), url = url })
+              vim.g.dbs = dbs
+            end
+            vim.schedule(function()
+              if vim.api.nvim_buf_is_valid(ev.buf) then
+                vim.api.nvim_buf_delete(ev.buf, { force = true })
+              end
+            end)
+            if debounced then
+              return
+            end
+            -- let picker/tree window-shuffling autocmds settle before touching
+            -- the layout, or their recovery logic tears the drawer back down
+            vim.defer_fn(function()
+              -- the drawer takes the file tree's slot; <leader>e brings the tree back
+              pcall(vim.cmd, "Neotree close")
+              vim.cmd("DBUI")
+              -- focus the drawer explicitly; DBUI's focus isn't guaranteed here
+              for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+                if vim.bo[vim.api.nvim_win_get_buf(win)].filetype == "dbui" then
+                  vim.api.nvim_set_current_win(win)
+                  break
+                end
+              end
+              if vim.bo.filetype ~= "dbui" then
+                return
+              end
+              -- :normal <Plug>(...) drops keys in timer-callback context, so
+              -- resolve the buffer-local mapping and call its function directly
+              local function dbui_invoke(plug)
+                local m = vim.fn.maparg("<Plug>(" .. plug .. ")", "n", false, true)
+                if type(m) ~= "table" or not m.rhs or m.rhs == "" then
+                  return
+                end
+                local call = m.rhs
+                  :gsub("^:call%s+", "")
+                  :gsub("<CR>$", "")
+                  :gsub("<[sS][iI][dD]>", "<SNR>" .. m.sid .. "_")
+                pcall(vim.cmd, "call " .. call)
+              end
+              -- pick up connections registered after the drawer first rendered
+              dbui_invoke("DBUI_Redraw")
+              -- Expand this database, then its tables node, so the schema is in
+              -- view. The connection populates asynchronously, so this is a
+              -- chevron-observing retry loop, not a blind toggle.
+              -- \u{f460}/\u{f47c} = collapsed/expanded chevron; \u{f04f1} = tables node
+              local pat = "\\V" .. vim.fn.escape(vim.fn.fnamemodify(path, ":t"), "\\")
+              local toggled_db = false
+              local function expand(tries)
+                if vim.bo.filetype ~= "dbui" then
+                  return
+                end
+                vim.fn.cursor(1, 1)
+                if vim.fn.search(pat, "cW") == 0 then
+                  return
+                end
+                local db_line = vim.api.nvim_get_current_line()
+                if db_line:find("\u{f47c}", 1, true) then
+                  -- connected and expanded: open the tables node, park on the db
+                  if
+                    vim.fn.search("\\V\u{f04f1}", "W") > 0
+                    and vim.api.nvim_get_current_line():find("\u{f460}", 1, true)
+                  then
+                    dbui_invoke("DBUI_SelectLine")
+                  end
+                  vim.fn.cursor(1, 1)
+                  vim.fn.search(pat, "cW")
+                  return
+                end
+                -- toggle exactly once; the chevron only flips after the
+                -- connect finishes, so re-toggling would undo a pending expand
+                if not toggled_db and db_line:find("\u{f460}", 1, true) then
+                  toggled_db = true
+                  dbui_invoke("DBUI_SelectLine")
+                end
+                if tries > 1 then
+                  vim.defer_fn(function()
+                    expand(tries - 1)
+                  end, 150)
+                end
+              end
+              expand(12)
+            end, 120)
+          end
+        '';
+      }
+      {
+        # DBUI windows: quiet gutters (global foldcolumn/statuscol bleed in
+        # otherwise) and a full-line cursor like neo-tree
+        event = "FileType";
+        pattern = [
+          "dbui"
+          "dbout"
+        ];
+        callback.__raw = ''
+          function()
+            vim.opt_local.foldcolumn = "0"
+            vim.opt_local.statuscolumn = ""
+            vim.opt_local.signcolumn = "no"
+            vim.opt_local.number = false
+            vim.opt_local.relativenumber = false
+            vim.opt_local.cursorline = true
+            vim.opt_local.cursorlineopt = "line"
           end
         '';
       }

@@ -134,6 +134,23 @@ mini.ai additions:
 
 Gitsigns shows inline blame on every line automatically.
 
+## Database
+
+Opening any SQLite file (`.db`, `.sqlite`, `.sqlite3`) — via `nvim app.db`, `:e`, oil, or the file tree — swaps the file tree for a database drawer (vim-dadbod-ui) with the schema already expanded: connection → tables, ready to browse. The file is verified by magic header; non-SQLite `.db` files open as plain text. Open a second database and it joins the same drawer.
+
+| Key       | Context      | Action                                              |
+| --------- | ------------ | --------------------------------------------------- |
+| `Space D` | anywhere     | Toggle database drawer                              |
+| `Space e` | anywhere     | Back to the file tree                               |
+| `Enter`   | drawer       | Expand node / open item                             |
+| `Enter`   | on a table   | Show helpers: List, Columns, Primary Keys, Indexes… |
+| `Enter`   | on `List`    | Run `SELECT * … LIMIT 200` into a results split     |
+| `R`       | drawer       | Refresh drawer                                      |
+| `:w`      | query buffer | Execute the query                                   |
+| `?`       | drawer       | Toggle mapping cheatsheet                           |
+
+Query buffers get table/column completion (blink + dadbod). Saved queries live under the connection in the drawer. Other databases (postgres, mysql, …) can be added with `A` in the drawer using a connection URL.
+
 ## Diagnostics
 
 | Key         | Action                              |
