@@ -1626,7 +1626,7 @@ in
             end
             vim.schedule(function()
               if vim.api.nvim_buf_is_valid(ev.buf) then
-                vim.api.nvim_buf_delete(ev.buf, { force = true })
+                pcall(vim.api.nvim_buf_delete, ev.buf, { force = true })
               end
             end)
             if debounced then
@@ -1635,6 +1635,29 @@ in
             -- let picker/tree window-shuffling autocmds settle before touching
             -- the layout, or their recovery logic tears the drawer back down
             vim.defer_fn(function()
+              -- opening a database means focusing it: retire the previous one's
+              -- results windows and auto-generated query buffers (buffers with
+              -- unsaved edits survive)
+              for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+                local b = vim.api.nvim_win_get_buf(win)
+                local ft = vim.bo[b].filetype
+                if
+                  ft == "dbout"
+                  or (ft == "sql" and vim.b[b].dbui_db_key_name ~= nil and not vim.bo[b].modified)
+                then
+                  pcall(vim.api.nvim_win_close, win, false)
+                end
+              end
+              for _, b in ipairs(vim.api.nvim_list_bufs()) do
+                if vim.api.nvim_buf_is_loaded(b) then
+                  local ft = vim.bo[b].filetype
+                  if ft == "dbout" then
+                    pcall(vim.api.nvim_buf_delete, b, { force = true })
+                  elseif ft == "sql" and vim.b[b].dbui_db_key_name ~= nil and not vim.bo[b].modified then
+                    pcall(vim.api.nvim_buf_delete, b, {})
+                  end
+                end
+              end
               -- the drawer takes the file tree's slot; <leader>e brings the tree back
               pcall(vim.cmd, "Neotree close")
               vim.cmd("DBUI")
@@ -1648,6 +1671,19 @@ in
               if vim.bo.filetype ~= "dbui" then
                 return
               end
+              -- a closed neighbor can leave the drawer as the only normal
+              -- window (stretched full-width); restore a main area beside it
+              local normal_wins = 0
+              for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+                if vim.api.nvim_win_get_config(win).relative == "" then
+                  normal_wins = normal_wins + 1
+                end
+              end
+              if normal_wins == 1 then
+                vim.cmd("botright vnew")
+                vim.cmd("wincmd h")
+              end
+              vim.api.nvim_win_set_width(0, vim.g.db_ui_winwidth)
               -- :normal <Plug>(...) drops keys in timer-callback context, so
               -- resolve the buffer-local mapping and call its function directly
               local function dbui_invoke(plug)
@@ -1661,13 +1697,43 @@ in
                   :gsub("<[sS][iI][dD]>", "<SNR>" .. m.sid .. "_")
                 pcall(vim.cmd, "call " .. call)
               end
-              -- pick up connections registered after the drawer first rendered
+              -- pick up connections registered after the drawer first rendered;
+              -- redraw only re-reads g:dbs when the cursor is on a level-0
+              -- line, so park it on line 1 first
+              vim.fn.cursor(1, 1)
               dbui_invoke("DBUI_Redraw")
+              local name = vim.fn.fnamemodify(path, ":t")
+              local function line_names_db(line)
+                local s = line:find(" " .. name, 1, true)
+                if s == nil then
+                  return false
+                end
+                local nxt = line:sub(s + #name + 1, s + #name + 1)
+                return nxt == "" or nxt == " "
+              end
+              -- collapse other expanded connections: one schema in view at a time
+              -- (they stay connected, one line each — Enter re-expands)
+              for _ = 1, 20 do
+                vim.fn.cursor(1, 1)
+                local found = vim.fn.search("^\\V\u{f47c}", "cW")
+                local toggled = false
+                while found > 0 do
+                  if not line_names_db(vim.api.nvim_get_current_line()) then
+                    dbui_invoke("DBUI_SelectLine")
+                    toggled = true
+                    break
+                  end
+                  found = vim.fn.search("^\\V\u{f47c}", "W")
+                end
+                if not toggled then
+                  break
+                end
+              end
               -- Expand this database, then its tables node, so the schema is in
               -- view. The connection populates asynchronously, so this is a
               -- chevron-observing retry loop, not a blind toggle.
               -- \u{f460}/\u{f47c} = collapsed/expanded chevron; \u{f04f1} = tables node
-              local pat = "\\V" .. vim.fn.escape(vim.fn.fnamemodify(path, ":t"), "\\")
+              local pat = "\\V " .. vim.fn.escape(name, "\\") .. "\\( \\|\\$\\)"
               local toggled_db = false
               local function expand(tries)
                 if vim.bo.filetype ~= "dbui" then
