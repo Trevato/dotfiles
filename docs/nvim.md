@@ -153,6 +153,8 @@ Opening another database focuses it: finished query and result windows close (qu
 
 Query buffers get table/column completion (blink + dadbod). Saved queries live under the connection in the drawer. Other databases (postgres, mysql, …) can be added with `A` in the drawer using a connection URL.
 
+The file tree and database drawer share the left slot — `Space e` and `Space D` swap between them rather than stacking sidebars. If a notification fades before you can read it: `:messages`, or `:lua Snacks.notifier.show_history()`.
+
 ## Diagnostics
 
 | Key         | Action                              |

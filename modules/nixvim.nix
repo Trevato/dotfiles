@@ -22,7 +22,10 @@ in
       db_ui_winwidth = 35;
       db_ui_auto_execute_table_helpers = 1;
       db_ui_show_help = 0; # `?` still toggles the cheatsheet
+      # stable prefix so scratch query buffers are identifiable even unloaded
+      db_ui_tmp_query_location = "~/.local/state/nvim/dbui-queries";
       db_ui_use_nvim_notify = 1; # route messages through snacks notifier
+      db_ui_disable_info_notifications = 1; # errors/warnings only, no chatter
       # tables first — browsing a schema is the primary gesture
       db_ui_drawer_sections = [
         "schemas"
@@ -1077,6 +1080,28 @@ in
         },
       })
 
+      -- The file tree and database drawer share the left slot; opening one
+      -- evicts the other so the editor never gets squeezed by two sidebars
+      local function win_with_ft(ft)
+        for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+          if vim.bo[vim.api.nvim_win_get_buf(w)].filetype == ft then
+            return w
+          end
+        end
+      end
+      function _G.toggle_tree(cmd)
+        if win_with_ft("dbui") then
+          pcall(vim.cmd, "DBUIClose")
+        end
+        vim.cmd(cmd)
+      end
+      function _G.toggle_db_drawer()
+        if not win_with_ft("dbui") and win_with_ft("neo-tree") then
+          pcall(vim.cmd, "Neotree close")
+        end
+        vim.cmd("DBUIToggle")
+      end
+
       -- Dashboard state for cycling views
       _G.dash = {
         git = 1, git_max = 3,
@@ -1429,13 +1454,13 @@ in
       {
         mode = "n";
         key = "<leader>e";
-        action = "<cmd>Neotree toggle<cr>";
+        action.__raw = ''function() _G.toggle_tree("Neotree toggle") end'';
         options.desc = "Toggle file tree";
       }
       {
         mode = "n";
         key = "<leader>ge";
-        action = "<cmd>Neotree git_status toggle<cr>";
+        action.__raw = ''function() _G.toggle_tree("Neotree git_status toggle") end'';
         options.desc = "Git status tree";
       }
       # Oil
@@ -1562,7 +1587,7 @@ in
       {
         mode = "n";
         key = "<leader>D";
-        action = "<cmd>DBUIToggle<cr>";
+        action.__raw = "function() _G.toggle_db_drawer() end";
         options.desc = "Database UI";
       }
     ];
@@ -1612,6 +1637,9 @@ in
             local debounced = opening[url] ~= nil and (now - opening[url]) < 2000
             opening[url] = now
             vim.g._dbui_opening = opening
+            -- last-opened db owns the drawer; an in-flight expand for an
+            -- earlier open aborts when it sees the focus moved on
+            vim.g._dbui_focus = url
             local dbs = vim.g.dbs or {}
             local known = false
             for _, db in ipairs(dbs) do
@@ -1635,38 +1663,66 @@ in
             -- let picker/tree window-shuffling autocmds settle before touching
             -- the layout, or their recovery logic tears the drawer back down
             vim.defer_fn(function()
-              -- opening a database means focusing it: retire the previous one's
-              -- results windows and auto-generated query buffers (buffers with
-              -- unsaved edits survive)
-              for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-                local b = vim.api.nvim_win_get_buf(win)
-                local ft = vim.bo[b].filetype
-                if
-                  ft == "dbout"
-                  or (ft == "sql" and vim.b[b].dbui_db_key_name ~= nil and not vim.bo[b].modified)
-                then
-                  pcall(vim.api.nvim_win_close, win, false)
-                end
-              end
-              for _, b in ipairs(vim.api.nvim_list_bufs()) do
-                if vim.api.nvim_buf_is_loaded(b) then
-                  local ft = vim.bo[b].filetype
-                  if ft == "dbout" then
-                    pcall(vim.api.nvim_buf_delete, b, { force = true })
-                  elseif ft == "sql" and vim.b[b].dbui_db_key_name ~= nil and not vim.bo[b].modified then
-                    pcall(vim.api.nvim_buf_delete, b, {})
-                  end
-                end
+              if vim.g._dbui_focus ~= url then
+                return
               end
               -- the drawer takes the file tree's slot; <leader>e brings the tree back
               pcall(vim.cmd, "Neotree close")
-              vim.cmd("DBUI")
+              pcall(vim.cmd, "DBUI")
               -- focus the drawer explicitly; DBUI's focus isn't guaranteed here
               for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
                 if vim.bo[vim.api.nvim_win_get_buf(win)].filetype == "dbui" then
                   vim.api.nvim_set_current_win(win)
                   break
                 end
+              end
+              if vim.bo.filetype ~= "dbui" then
+                return
+              end
+              -- Opening a database means focusing it: retire the previous
+              -- one's results windows and scratch query buffers (buffers with
+              -- unsaved edits survive). This must run with the drawer OPEN —
+              -- dadbod's own BufDelete handlers re-render the drawer and
+              -- misbehave against a closed one. Identify scratch buffers by
+              -- their tmp-location path — window shuffles can unload them,
+              -- which strips filetype and buffer-local marks.
+              local tmploc = vim.fn.fnamemodify(vim.fn.expand(vim.g.db_ui_tmp_query_location), ":p"):gsub("/$", "")
+              local function dadbod_scratch_kind(b)
+                local bufname = vim.api.nvim_buf_get_name(b)
+                if bufname:sub(-6) == ".dbout" then
+                  return "dbout"
+                end
+                if bufname:sub(1, #tmploc) == tmploc then
+                  return "query"
+                end
+                local loaded = vim.api.nvim_buf_is_loaded(b)
+                if loaded and vim.bo[b].filetype == "dbout" then
+                  return "dbout"
+                end
+                if loaded and vim.bo[b].filetype == "sql" and vim.b[b].dbui_db_key_name ~= nil then
+                  return "query"
+                end
+                return nil
+              end
+              local drawer_win = vim.api.nvim_get_current_win()
+              for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+                local b = vim.api.nvim_win_get_buf(win)
+                local kind = dadbod_scratch_kind(b)
+                if kind == "dbout" or (kind == "query" and not vim.bo[b].modified) then
+                  pcall(vim.api.nvim_win_close, win, false)
+                end
+              end
+              for _, b in ipairs(vim.api.nvim_list_bufs()) do
+                local kind = dadbod_scratch_kind(b)
+                if kind == "dbout" then
+                  pcall(vim.api.nvim_buf_delete, b, { force = true })
+                elseif kind == "query" and not vim.bo[b].modified then
+                  pcall(vim.api.nvim_buf_delete, b, {})
+                end
+              end
+              -- window closes above may have moved focus; return to the drawer
+              if vim.api.nvim_win_is_valid(drawer_win) then
+                vim.api.nvim_set_current_win(drawer_win)
               end
               if vim.bo.filetype ~= "dbui" then
                 return
@@ -1736,7 +1792,7 @@ in
               local pat = "\\V " .. vim.fn.escape(name, "\\") .. "\\( \\|\\$\\)"
               local toggled_db = false
               local function expand(tries)
-                if vim.bo.filetype ~= "dbui" then
+                if vim.g._dbui_focus ~= url or vim.bo.filetype ~= "dbui" then
                   return
                 end
                 vim.fn.cursor(1, 1)
@@ -1835,6 +1891,9 @@ in
       foldcolumn = "1";
       splitbelow = true;
       splitright = true;
+      # no "blank": sidebars (neo-tree, DBUI, results) are nofile buffers and
+      # would otherwise restore as hollow empty windows in saved sessions
+      sessionoptions = "buffers,curdir,folds,help,tabpages,winsize,terminal";
       showmode = false;
       cmdheight = 0;
       laststatus = 3;
