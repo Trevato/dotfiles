@@ -1620,6 +1620,7 @@ in
         callback.__raw = ''
           function(ev)
             local path = vim.fn.fnamemodify(ev.file, ":p")
+            path = vim.uv.fs_realpath(path) or path
             local f = io.open(path, "rb")
             local header = f and f:read(16) or nil
             if f then f:close() end
@@ -1640,18 +1641,54 @@ in
             -- last-opened db owns the drawer; an in-flight expand for an
             -- earlier open aborts when it sees the focus moved on
             vim.g._dbui_focus = url
+            -- Register the connection. Names must be unique — dadbod-ui
+            -- silently drops duplicate names, and projects tend to call every
+            -- database the same thing — so every connection gets the shortest
+            -- path suffix that distinguishes it (app.db → plat/app.db, …),
+            -- recomputed over the whole set whenever one is added.
             local dbs = vim.g.dbs or {}
-            local known = false
+            local present = false
             for _, db in ipairs(dbs) do
               if db.url == url then
-                known = true
+                present = true
                 break
               end
             end
-            if not known then
-              table.insert(dbs, { name = vim.fn.fnamemodify(path, ":t"), url = url })
-              vim.g.dbs = dbs
+            if not present then
+              table.insert(dbs, { name = "", url = url })
             end
+            local function suffix_name(u, d)
+              local p = vim.split(u:gsub("^sqlite:", ""), "/", { plain = true, trimempty = true })
+              return table.concat(p, "/", math.max(1, #p - d + 1), #p)
+            end
+            local depth = {}
+            for _, db in ipairs(dbs) do
+              depth[db.url] = 1
+            end
+            for _ = 1, 32 do
+              local by_name, clash = {}, false
+              for _, db in ipairs(dbs) do
+                local n = suffix_name(db.url, depth[db.url])
+                by_name[n] = by_name[n] or {}
+                table.insert(by_name[n], db.url)
+              end
+              for _, urls in pairs(by_name) do
+                if #urls > 1 then
+                  clash = true
+                  for _, u in ipairs(urls) do
+                    depth[u] = depth[u] + 1
+                  end
+                end
+              end
+              if not clash then
+                break
+              end
+            end
+            for _, db in ipairs(dbs) do
+              db.name = suffix_name(db.url, depth[db.url])
+            end
+            vim.g.dbs = dbs
+            local display_name = suffix_name(url, depth[url])
             vim.schedule(function()
               if vim.api.nvim_buf_is_valid(ev.buf) then
                 pcall(vim.api.nvim_buf_delete, ev.buf, { force = true })
@@ -1758,7 +1795,7 @@ in
               -- line, so park it on line 1 first
               vim.fn.cursor(1, 1)
               dbui_invoke("DBUI_Redraw")
-              local name = vim.fn.fnamemodify(path, ":t")
+              local name = display_name
               local function line_names_db(line)
                 local s = line:find(" " .. name, 1, true)
                 if s == nil then

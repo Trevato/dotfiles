@@ -138,7 +138,7 @@ Gitsigns shows inline blame on every line automatically.
 
 Opening any SQLite file (`.db`, `.sqlite`, `.sqlite3`) — via `nvim app.db`, `:e`, oil, or the file tree — swaps the file tree for a database drawer (vim-dadbod-ui) with the schema already expanded: connection → tables, ready to browse. The file is verified by magic header; non-SQLite `.db` files open as plain text.
 
-Opening another database focuses it: finished query and result windows close (query buffers with unsaved edits survive), and other connections collapse to a single line each — still connected, Enter re-expands.
+Opening another database focuses it: finished query and result windows close (query buffers with unsaved edits survive), and other connections collapse to a single line each — still connected, Enter re-expands. Connections are named by the shortest path suffix that tells them apart, so a fleet of same-named databases reads as `plat/app.db`, `web/app.db`, … Symlinked and relative paths resolve to one connection.
 
 | Key       | Context      | Action                                              |
 | --------- | ------------ | --------------------------------------------------- |
