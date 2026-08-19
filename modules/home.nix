@@ -130,10 +130,14 @@ in
       ZSH_AUTOSUGGEST_STRATEGY=(history)
 
       # Prevent Atuin's widget from desyncing the autosuggestion buffer
-      ZSH_AUTOSUGGEST_CLEAR_WIDGETS+=(_atuin_search_widget)
+      ZSH_AUTOSUGGEST_CLEAR_WIDGETS+=(atuin-search)
 
+      # Arrows walk history by prefix (atuin keeps Ctrl-R). Both escape forms:
+      # zle runs the terminal in application mode, where arrows send ^[O_.
       bindkey '^[[A' history-search-backward
+      bindkey '^[OA' history-search-backward
       bindkey '^[[B' history-search-forward
+      bindkey '^[OB' history-search-forward
 
       # Tab title: show working directory at prompt, running command during execution
       autoload -Uz add-zsh-hook
@@ -456,6 +460,7 @@ in
   programs.atuin = {
     enable = true;
     enableZshIntegration = true;
+    flags = [ "--disable-up-arrow" ]; # Ctrl-R only; arrows are zsh's (initContent)
     settings = {
       search_mode = "fuzzy";
       filter_mode = "global";
