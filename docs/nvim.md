@@ -54,22 +54,22 @@ Press `Space` and wait to see organized groups (find, git, code, etc.)
 
 ## Editing
 
-| Key                 | Mode                | Action                                              |
-| ------------------- | ------------------- | --------------------------------------------------- |
-| `J`                 | normal              | Join lines (cursor stays in place)                  |
-| `J` / `K`           | visual              | Move selected lines down / up                       |
-| `p`                 | visual              | Paste without yanking replaced text                 |
-| `x`                 | normal              | Delete char without yanking                         |
-| `Space cf`          | normal              | Format buffer                                       |
-| `Space ca`          | normal              | Code actions (opens in telescope)                   |
-| `Space rn`          | normal              | Rename symbol                                       |
-| `gcc`               | normal              | Toggle line comment                                 |
-| `gc`                | visual              | Toggle comment on selection                         |
-| `Tab` / `Shift+Tab` | insert (cmp)        | Next / previous completion                          |
-| `Enter`             | insert (cmp)        | Accept completion                                   |
-| `Ctrl+Space`        | insert (cmp)        | Trigger completion                                  |
-| `Ctrl+Space`        | normal              | Start treesitter selection, keep pressing to expand |
-| `Backspace`         | visual (treesitter) | Shrink selection                                    |
+| Key                 | Mode   | Action                                                   |
+| ------------------- | ------ | -------------------------------------------------------- |
+| `J`                 | normal | Join lines (cursor stays in place)                       |
+| `J` / `K`           | visual | Move selected lines down / up                            |
+| `p`                 | visual | Paste without yanking replaced text                      |
+| `x`                 | normal | Delete char without yanking                              |
+| `Space cf`          | normal | Format buffer                                            |
+| `Space ca`          | normal | Code actions (opens in telescope)                        |
+| `Space rn`          | normal | Rename symbol                                            |
+| `gcc`               | normal | Toggle line comment                                      |
+| `gc`                | visual | Toggle comment on selection                              |
+| `Tab` / `Shift+Tab` | insert | Next / previous completion                               |
+| `Enter`             | insert | Accept completion                                        |
+| `Ctrl+Space`        | insert | Trigger completion                                       |
+| `an` / `in`         | visual | Select around / inside treesitter node; repeat to expand |
+| `]n` / `[n`         | visual | Expand selection to next / previous sibling node         |
 
 Completion popup has rounded borders with documentation preview.
 
@@ -164,6 +164,17 @@ The file tree and database drawer share the left slot — `Space e` and `Space D
 | `Space xd`  | Toggle buffer diagnostics (Trouble) |
 | `K`         | Hover documentation / error detail  |
 
+## Folds
+
+Treesitter folds (nvim-ufo), open by default; the fold column shows markers and is clickable.
+
+| Key         | Action                                          |
+| ----------- | ----------------------------------------------- |
+| `zc` / `zo` | Close / open fold under cursor (standard)       |
+| `zR`        | Open all folds                                  |
+| `zM`        | Close all folds                                 |
+| `zK`        | Peek the folded lines (falls back to LSP hover) |
+
 ## Undo
 
 | Key            | Action                                    |
@@ -207,28 +218,13 @@ Opens automatically when nvim starts with no file arguments. A command center sh
 
 Right pane shows async terminal sections (git, docker, kubernetes) with TTL caching. Sections only appear when the relevant tool is installed.
 
-## Experimental
-
-These are Tier 3 plugins. Try them, keep what sticks, remove what doesn't.
-
-### Debug (DAP)
-
-| Key        | Action            |
-| ---------- | ----------------- |
-| `Space db` | Toggle breakpoint |
-| `Space dc` | Continue          |
-| `Space di` | Step into         |
-| `Space do` | Step over         |
-| `Space dO` | Step out          |
-| `Space du` | Toggle DAP UI     |
-
-Note: DAP needs debug adapters configured per language. The framework is installed but you'll need to add adapters (e.g. js-debug-adapter, debugpy) for your specific languages.
+## Focus
 
 ### Zen Mode + Twilight
 
-| Key       | Action                                            |
-| --------- | ------------------------------------------------- |
-| `Space z` | Toggle zen mode (120-char centered, no UI chrome) |
+| Key       | Action                                          |
+| --------- | ----------------------------------------------- |
+| `Space z` | Toggle zen mode (88-col centered, no UI chrome) |
 
 Twilight automatically dims inactive code sections when zen mode is active.
 
@@ -257,6 +253,9 @@ These work automatically with no keybinding:
 - **which-key** -- press Space and wait to see organized groups
 - **quickfile** -- instant file open before heavy plugins load
 - **notifier** -- improved vim.notify display
+- **satellite** -- scrollbar with diagnostic, search and git-hunk marks
+- **incline** -- floating filename in the corner of every split
+- **persistence** -- session saved on quit (see Sessions)
 
 ## LSP Servers
 
@@ -293,16 +292,16 @@ Right: filetype | progress | location
 
 ## Options
 
-| Setting       | Value                                             |
-| ------------- | ------------------------------------------------- |
-| Line numbers  | Relative                                          |
-| Indent        | 2 spaces (expandtab)                              |
-| Clipboard     | System                                            |
-| Search        | Case-insensitive (smart-case when uppercase used) |
-| Scroll offset | 8 lines                                           |
-| Sign column   | Always visible                                    |
-| Cursor line   | Highlighted                                       |
-| Splits        | Open below and right                              |
-| Line wrap     | Off                                               |
-| Undo          | Persistent across sessions                        |
-| Theme         | Catppuccin Mocha (transparent)                    |
+| Setting       | Value                                                   |
+| ------------- | ------------------------------------------------------- |
+| Line numbers  | Relative                                                |
+| Indent        | 2 spaces (expandtab)                                    |
+| Clipboard     | System                                                  |
+| Search        | Case-insensitive (smart-case when uppercase used)       |
+| Scroll offset | 8 lines                                                 |
+| Sign column   | Always visible                                          |
+| Cursor line   | Line number highlighted only                            |
+| Splits        | Open below and right                                    |
+| Line wrap     | On, at word boundaries, indented                        |
+| Undo          | Persistent across sessions                              |
+| Theme         | Catppuccin, follows the OS (Mocha / Latte), transparent |

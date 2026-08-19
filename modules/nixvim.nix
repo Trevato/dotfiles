@@ -79,15 +79,11 @@ in
           treesitter_context = true;
           telescope.enabled = true;
           which_key = true;
-          notify = true;
           noice = true;
           mini.enabled = true;
           render_markdown = true;
           indent_blankline.enabled = true;
           markdown = true;
-          mason = true;
-          dap = true;
-          dap_ui = true;
           fidget = true;
           flash = true;
           harpoon = true;
@@ -238,29 +234,18 @@ in
         extensions.fzf-native.enable = true;
         extensions.ui-select.enable = true;
       };
+      # Folding stays with nvim-ufo; incremental selection is built into
+      # Neovim 0.12 (an/in in visual mode, ]n/[n)
       treesitter = {
         enable = true;
-        settings.incremental_selection = {
-          enable = true;
-          keymaps = {
-            init_selection = "<C-space>";
-            node_incremental = "<C-space>";
-            scope_incremental = false;
-            node_decremental = "<bs>";
-          };
-        };
+        highlight.enable = true;
+        indent.enable = true;
       };
       treesitter-context.enable = true;
       nvim-ufo = {
         enable = true;
         settings = {
           open_fold_hl_timeout = 150;
-          close_fold_kinds_for_ft = {
-            default = [
-              "imports"
-              "comment"
-            ];
-          };
           preview = {
             win_config = {
               border = [
@@ -344,52 +329,7 @@ in
         };
       };
       ts-autotag.enable = true;
-      treesitter-textobjects = {
-        enable = true;
-        settings = {
-          select = {
-            enable = true;
-            lookahead = true;
-            keymaps = {
-              "af" = "@function.outer";
-              "if" = "@function.inner";
-              "ac" = "@class.outer";
-              "ic" = "@class.inner";
-              "aa" = "@parameter.outer";
-              "ia" = "@parameter.inner";
-            };
-          };
-          move = {
-            enable = true;
-            set_jumps = true;
-            goto_next_start = {
-              "]m" = "@function.outer";
-              "]]" = "@class.outer";
-            };
-            goto_next_end = {
-              "]M" = "@function.outer";
-              "][" = "@class.outer";
-            };
-            goto_previous_start = {
-              "[m" = "@function.outer";
-              "[[" = "@class.outer";
-            };
-            goto_previous_end = {
-              "[M" = "@function.outer";
-              "[]" = "@class.outer";
-            };
-          };
-          swap = {
-            enable = true;
-            swap_next = {
-              "<leader>sa" = "@parameter.inner";
-            };
-            swap_previous = {
-              "<leader>sA" = "@parameter.inner";
-            };
-          };
-        };
-      };
+      treesitter-textobjects.enable = true; # configured in extraConfigLua
       web-devicons.enable = true;
       bufferline.enable = true;
       colorizer.enable = true;
@@ -556,12 +496,12 @@ in
             group = "refactor";
           }
           {
-            __unkeyed-1 = "<leader>d";
-            group = "debug";
-          }
-          {
             __unkeyed-1 = "<leader>s";
             group = "swap";
+          }
+          {
+            __unkeyed-1 = "<leader>m";
+            group = "markdown";
           }
         ];
       };
@@ -858,10 +798,7 @@ in
       trouble.enable = true;
       todo-comments.enable = true;
 
-      # Experimental
-      dap.enable = true;
-      dap-ui.enable = true;
-      dap-virtual-text.enable = true;
+      # Focus
       zen-mode = {
         enable = true;
         settings = {
@@ -911,7 +848,6 @@ in
             override = {
               "vim.lsp.util.convert_input_to_markdown_lines" = true;
               "vim.lsp.util.stylize_markdown" = true;
-              "cmp.entry.get_documentation" = true;
             };
           };
           presets = {
@@ -1006,6 +942,42 @@ in
     ];
 
     extraConfigLua = ''
+      -- Treesitter text objects. The plugin (main branch) takes no keymaps in
+      -- setup(); each one is an explicit mapping onto its module.
+      require("nvim-treesitter-textobjects").setup({
+        select = { lookahead = true },
+        move = { set_jumps = true },
+      })
+      do
+        local select = require("nvim-treesitter-textobjects.select")
+        local move = require("nvim-treesitter-textobjects.move")
+        local swap = require("nvim-treesitter-textobjects.swap")
+        for lhs, t in pairs({
+          af = { "@function.outer", "around function" },
+          ["if"] = { "@function.inner", "inside function" },
+          ac = { "@class.outer", "around class" },
+          ic = { "@class.inner", "inside class" },
+          aa = { "@parameter.outer", "around argument" },
+          ia = { "@parameter.inner", "inside argument" },
+        }) do
+          vim.keymap.set({ "x", "o" }, lhs, function() select.select_textobject(t[1], "textobjects") end, { desc = t[2] })
+        end
+        for lhs, t in pairs({
+          ["]m"] = { "goto_next_start", "@function.outer", "Next function start" },
+          ["]M"] = { "goto_next_end", "@function.outer", "Next function end" },
+          ["[m"] = { "goto_previous_start", "@function.outer", "Previous function start" },
+          ["[M"] = { "goto_previous_end", "@function.outer", "Previous function end" },
+          ["]]"] = { "goto_next_start", "@class.outer", "Next class start" },
+          ["]["] = { "goto_next_end", "@class.outer", "Next class end" },
+          ["[["] = { "goto_previous_start", "@class.outer", "Previous class start" },
+          ["[]"] = { "goto_previous_end", "@class.outer", "Previous class end" },
+        }) do
+          vim.keymap.set({ "n", "x", "o" }, lhs, function() move[t[1]](t[2], "textobjects") end, { desc = t[3] })
+        end
+        vim.keymap.set("n", "<leader>sa", function() swap.swap_next("@parameter.inner") end, { desc = "Swap parameter with next" })
+        vim.keymap.set("n", "<leader>sA", function() swap.swap_previous("@parameter.inner") end, { desc = "Swap parameter with previous" })
+      end
+
       -- Floating per-window filenames (shows which split is which)
       require('incline').setup({
         hide = { cursorline = true },
@@ -1284,43 +1256,6 @@ in
         key = "<leader>ql";
         action.__raw = "function() require('persistence').load({ last = true }) end";
         options.desc = "Restore last session";
-      }
-      # Debug
-      {
-        mode = "n";
-        key = "<leader>db";
-        action.__raw = "function() require('dap').toggle_breakpoint() end";
-        options.desc = "Toggle breakpoint";
-      }
-      {
-        mode = "n";
-        key = "<leader>dc";
-        action.__raw = "function() require('dap').continue() end";
-        options.desc = "Continue";
-      }
-      {
-        mode = "n";
-        key = "<leader>di";
-        action.__raw = "function() require('dap').step_into() end";
-        options.desc = "Step into";
-      }
-      {
-        mode = "n";
-        key = "<leader>do";
-        action.__raw = "function() require('dap').step_over() end";
-        options.desc = "Step over";
-      }
-      {
-        mode = "n";
-        key = "<leader>dO";
-        action.__raw = "function() require('dap').step_out() end";
-        options.desc = "Step out";
-      }
-      {
-        mode = "n";
-        key = "<leader>du";
-        action.__raw = "function() require('dapui').toggle() end";
-        options.desc = "Toggle DAP UI";
       }
       # Zen
       {
