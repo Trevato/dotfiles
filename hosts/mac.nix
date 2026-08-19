@@ -1,16 +1,12 @@
 # Mac-specific configuration (otavert-mac)
 { pkgs, user, ... }:
 {
-  # Mac-only packages
+  # Mac-only packages — the container runtime and desktop apps. Portable CLI
+  # tools (including the Kubernetes toolbox) live in modules/home.nix.
   environment.systemPackages = with pkgs; [
     docker
     colima
     lazydocker
-    kubectl
-    kubernetes-helm
-    helmfile
-    k9s
-    kustomize
     discord
     wireguard-tools
   ];

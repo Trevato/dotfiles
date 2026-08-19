@@ -20,6 +20,10 @@ in
   home.username = user.username;
   home.homeDirectory = if isDarwin then "/Users/${user.username}" else "/home/${user.username}";
 
+  # Standalone home-manager needs its own CLI for `just switch`; on macOS
+  # nix-darwin drives the rebuild.
+  programs.home-manager.enable = !isDarwin;
+
   # Tracking nixpkgs-unstable; home-manager/nixvim version strings lag behind.
   # Silence the cosmetic release-mismatch check.
   home.enableNixpkgsReleaseCheck = false;
@@ -45,7 +49,16 @@ in
     sd
     xh
     tldr
-    # Formatters/linters used by nvim (conform + lsp)
+    # Kubernetes — a jumpbox is exactly where these belong
+    kubectl
+    kubernetes-helm
+    helmfile
+    kustomize
+    k9s
+    fluxcd
+    supabase-cli
+    # Formatters/linters shared by nvim (conform + lsp) and the Claude Code
+    # format hook (modules/claude.nix)
     nixfmt
     prettierd
     stylua
