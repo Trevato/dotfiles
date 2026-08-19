@@ -2,6 +2,7 @@
 # box (via standalone home-manager). Machine-specific config lives outside the
 # repo in ~/.zshrc.local, ~/.gitconfig.local, and ~/.ssh/config.local.
 {
+  config,
   pkgs,
   lib,
   user,
@@ -235,69 +236,15 @@ in
 
   programs.ghostty = {
     enable = true;
-    package = null; # config only — install ghostty itself per machine
+    package = null; # config only — the app is a homebrew cask on macOS (modules/darwin.nix)
     systemd.enable = false; # requires a package; incompatible with package = null
     enableZshIntegration = true;
-    themes = {
-      Catppuccin-Mocha-Glass = {
-        palette = [
-          "0=#45475a"
-          "1=#f38ba8"
-          "2=#a6e3a1"
-          "3=#f9e2af"
-          "4=#89b4fa"
-          "5=#f5c2e7"
-          "6=#94e2d5"
-          "7=#a6adc8"
-          "8=#585b70"
-          "9=#f37799"
-          "10=#89d88b"
-          "11=#ebd391"
-          "12=#74a8fc"
-          "13=#f2aede"
-          "14=#6bd7ca"
-          "15=#bac2de"
-        ];
-        background = "#1e1e2e";
-        foreground = "#cdd6f4";
-        cursor-color = "#f5e0dc";
-        cursor-text = "#1e1e2e";
-        selection-background = "#585b70";
-        selection-foreground = "#cdd6f4";
-      };
-      Catppuccin-Latte-Glass = {
-        palette = [
-          "0=#5c5f77"
-          "1=#d20f39"
-          "2=#40a02b"
-          "3=#df8e1d"
-          "4=#1e66f5"
-          "5=#ea76cb"
-          "6=#179299"
-          "7=#acb0be"
-          "8=#6c6f85"
-          "9=#de293e"
-          "10=#49af3d"
-          "11=#eea02d"
-          "12=#456eff"
-          "13=#fe85d8"
-          "14=#2d9fa8"
-          "15=#bcc0cc"
-        ];
-        background = "#eff1f5";
-        foreground = "#4c4f69";
-        cursor-color = "#dc8a78";
-        cursor-text = "#eff1f5";
-        selection-background = "#acb0be";
-        selection-foreground = "#4c4f69";
-      };
-    };
     settings = {
       font-family = "FiraCode Nerd Font Mono";
       font-size = 14;
       font-thicken = true;
       adjust-cell-height = "10%";
-      theme = "light:Catppuccin-Latte-Glass,dark:Catppuccin-Mocha-Glass";
+      theme = "light:Catppuccin Latte,dark:Catppuccin Mocha"; # built-in themes
       background-opacity = 0.55;
       background-blur = 12;
       mouse-hide-while-typing = true;
@@ -480,148 +427,33 @@ in
   };
 
   home.sessionPath = [ "$HOME/.local/bin" ];
-  home.sessionVariables.K9S_CONFIG_DIR = "$HOME/.config/k9s";
 
-  home.file.".config/k9s/config.yaml".text = builtins.toJSON {
-    k9s = {
-      liveViewAutoRefresh = false;
-      refreshRate = 2;
-      ui = {
-        enableMouse = false;
-        headless = false;
-        logoless = false;
-        crumbsless = false;
-        noIcons = false;
-        skin = "catppuccin-mocha-transparent";
+  # k9s — XDG on every platform (its macOS default is ~/Library/Application
+  # Support) so config and cluster state live in one place. Skin is the
+  # upstream Catppuccin port.
+  home.sessionVariables.K9S_CONFIG_DIR = "${config.xdg.configHome}/k9s";
+  xdg.configFile = {
+    "k9s/config.yaml".source = (pkgs.formats.yaml { }).generate "k9s-config.yaml" {
+      k9s = {
+        liveViewAutoRefresh = false;
+        refreshRate = 2;
+        ui = {
+          enableMouse = false;
+          headless = false;
+          logoless = false;
+          crumbsless = false;
+          noIcons = false;
+          skin = "catppuccin-mocha-transparent";
+        };
       };
     };
-  };
-
-  home.file.".config/k9s/skins/catppuccin-mocha-transparent.yaml".text = builtins.toJSON {
-    k9s = {
-      body = {
-        fgColor = "#cdd6f4";
-        bgColor = "default";
-        logoColor = "#cba6f7";
-      };
-      prompt = {
-        fgColor = "#cdd6f4";
-        bgColor = "default";
-        suggestColor = "#89b4fa";
-      };
-      help = {
-        fgColor = "#cdd6f4";
-        bgColor = "default";
-        sectionColor = "#a6e3a1";
-        keyColor = "#89b4fa";
-        numKeyColor = "#eba0ac";
-      };
-      frame = {
-        title = {
-          fgColor = "#94e2d5";
-          bgColor = "default";
-          highlightColor = "#f5c2e7";
-          counterColor = "#f9e2af";
-          filterColor = "#a6e3a1";
+    "k9s/skins/catppuccin-mocha-transparent.yaml".source =
+      let
+        catppuccin = pkgs.catppuccin.override {
+          variant = "mocha";
+          themeList = [ "k9s" ];
         };
-        border = {
-          fgColor = "#cba6f7";
-          focusColor = "#b4befe";
-        };
-        menu = {
-          fgColor = "#cdd6f4";
-          keyColor = "#89b4fa";
-          numKeyColor = "#eba0ac";
-        };
-        crumbs = {
-          fgColor = "#1e1e2e";
-          bgColor = "default";
-          activeColor = "#f2cdcd";
-        };
-        status = {
-          newColor = "#89b4fa";
-          modifyColor = "#b4befe";
-          addColor = "#a6e3a1";
-          pendingColor = "#fab387";
-          errorColor = "#f38ba8";
-          highlightColor = "#89dceb";
-          killColor = "#cba6f7";
-          completedColor = "#6c7086";
-        };
-      };
-      info = {
-        fgColor = "#fab387";
-        sectionColor = "#cdd6f4";
-      };
-      views = {
-        table = {
-          fgColor = "#cdd6f4";
-          bgColor = "default";
-          cursorFgColor = "#313244";
-          cursorBgColor = "#45475a";
-          markColor = "#f5e0dc";
-          header = {
-            fgColor = "#f9e2af";
-            bgColor = "default";
-            sorterColor = "#89dceb";
-          };
-        };
-        xray = {
-          fgColor = "#cdd6f4";
-          bgColor = "default";
-          cursorColor = "#45475a";
-          cursorTextColor = "#1e1e2e";
-          graphicColor = "#f5c2e7";
-        };
-        charts = {
-          bgColor = "default";
-          chartBgColor = "default";
-          dialBgColor = "default";
-          defaultDialColors = [
-            "#a6e3a1"
-            "#f38ba8"
-          ];
-          defaultChartColors = [
-            "#a6e3a1"
-            "#f38ba8"
-          ];
-          resourceColors = {
-            cpu = [
-              "#cba6f7"
-              "#89b4fa"
-            ];
-            mem = [
-              "#f9e2af"
-              "#fab387"
-            ];
-          };
-        };
-        yaml = {
-          keyColor = "#89b4fa";
-          valueColor = "#cdd6f4";
-          colonColor = "#a6adc8";
-        };
-        logs = {
-          fgColor = "#cdd6f4";
-          bgColor = "default";
-          indicator = {
-            fgColor = "#b4befe";
-            bgColor = "default";
-            toggleOnColor = "#a6e3a1";
-            toggleOffColor = "#a6adc8";
-          };
-        };
-      };
-      dialog = {
-        fgColor = "#f9e2af";
-        bgColor = "default";
-        buttonFgColor = "#1e1e2e";
-        buttonBgColor = "default";
-        buttonFocusFgColor = "#1e1e2e";
-        buttonFocusBgColor = "#f5c2e7";
-        labelFgColor = "#f5e0dc";
-        fieldFgColor = "#cdd6f4";
-      };
-    };
+      in
+      "${catppuccin}/k9s/catppuccin-mocha-transparent.yaml";
   };
 }
