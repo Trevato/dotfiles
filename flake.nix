@@ -45,17 +45,6 @@
       darwinConfigurations.${hostname} = nix-darwin.lib.darwinSystem {
         specialArgs = { inherit inputs self user; };
         modules = [
-          {
-            nixpkgs.overlays = [
-              (final: prev: {
-                direnv = prev.direnv.overrideAttrs (old: {
-                  env = (old.env or { }) // {
-                    CGO_ENABLED = 1;
-                  };
-                });
-              })
-            ];
-          }
           ./modules/darwin.nix
           ./modules/minecraft.nix
           ./hosts/mac.nix

@@ -7,10 +7,10 @@
   ...
 }:
 {
+  # No C toolchain here: nixpkgs gcc would shadow Apple's cc/c++ system-wide.
+  # Projects that need one get it from a devShell.
   environment.systemPackages = with pkgs; [
     git
-    gcc
-    gnumake
     tailscale
     spotify-player
   ];
@@ -31,7 +31,7 @@
   documentation.doc.enable = false;
   system.tools.darwin-uninstaller.enable = false;
 
-  nix.settings.experimental-features = "nix-command flakes";
+  # nix.conf is Determinate's (nix.enable = false in hosts/mac.nix); flakes are on there.
   system.configurationRevision = self.rev or self.dirtyRev or null;
   system.stateVersion = 6;
 
@@ -65,10 +65,13 @@
     };
   };
 
+  # GUI apps that nixpkgs doesn't ship well on macOS. Ghostty's config is
+  # home-manager's (modules/home.nix); the app itself comes from here.
   homebrew = {
     enable = true;
     onActivation.cleanup = "zap";
     casks = [
+      "ghostty"
       "spotify"
     ];
   };
