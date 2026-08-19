@@ -1,5 +1,5 @@
 # Mac-specific configuration (otavert-mac)
-{ pkgs, ... }:
+{ pkgs, user, ... }:
 {
   # Mac-only packages
   environment.systemPackages = with pkgs; [
@@ -27,8 +27,8 @@
   nixpkgs.hostPlatform = "aarch64-darwin";
   security.pam.services.sudo_local.touchIdAuth = true;
   nix.enable = false; # Required for Determinate Systems installer
-  users.users.trevato.home = "/Users/trevato";
-  system.primaryUser = "trevato";
+  users.users.${user.username}.home = "/Users/${user.username}";
+  system.primaryUser = user.username;
 
   # macOS system defaults
   system.defaults = {

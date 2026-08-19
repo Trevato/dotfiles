@@ -20,10 +20,21 @@
       ...
     }:
     let
+      # Identity lives here and nowhere else; every module reads from `user`.
+      user = {
+        username = "trevato"; # login name — home directory, home-manager, darwin primary user
+        name = "trevato"; # git author
+        email = "me@trevato.dev";
+        site = "trevato.dev"; # nvim dashboard subtitle
+        github = "trevato";
+      };
+      hostname = "otavert-mac";
+
       linuxSystems = [
         "x86_64-linux"
         "aarch64-linux"
       ];
+      forLinux = nixpkgs.lib.genAttrs linuxSystems;
     in
     {
       formatter = nixpkgs.lib.genAttrs ([ "aarch64-darwin" ] ++ linuxSystems) (
@@ -31,8 +42,8 @@
       );
 
       # macOS — full system (nix-darwin + home-manager as a module)
-      darwinConfigurations."otavert-mac" = nix-darwin.lib.darwinSystem {
-        specialArgs = { inherit inputs self; };
+      darwinConfigurations.${hostname} = nix-darwin.lib.darwinSystem {
+        specialArgs = { inherit inputs self user; };
         modules = [
           {
             nixpkgs.overlays = [
@@ -53,8 +64,8 @@
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
             home-manager.backupFileExtension = "backup";
-            home-manager.extraSpecialArgs = { inherit inputs; };
-            home-manager.users.trevato = import ./modules/home.nix;
+            home-manager.extraSpecialArgs = { inherit inputs user; };
+            home-manager.users.${user.username} = import ./modules/home.nix;
           }
         ];
       };
@@ -62,13 +73,22 @@
       # Any Linux box — standalone home-manager (jumpbox, Raspberry Pi, VM)
       homeConfigurations = builtins.listToAttrs (
         map (system: {
-          name = "trevato@${system}";
+          name = "${user.username}@${system}";
           value = home-manager.lib.homeManagerConfiguration {
             pkgs = nixpkgs.legacyPackages.${system};
-            extraSpecialArgs = { inherit inputs; };
+            extraSpecialArgs = { inherit inputs user; };
             modules = [ ./modules/home.nix ];
           };
         }) linuxSystems
       );
+
+      # `nix flake check --no-build --all-systems` evaluates all of them (just check, CI)
+      checks =
+        forLinux (system: {
+          home = self.homeConfigurations."${user.username}@${system}".activationPackage;
+        })
+        // {
+          aarch64-darwin.darwin = self.darwinConfigurations.${hostname}.system;
+        };
     };
 }

@@ -2,12 +2,13 @@
   inputs,
   pkgs,
   lib,
+  user,
   ...
 }:
 let
   banner = import ../lib/ascii-banner.nix { inherit lib; };
-  dashboardName = "trevato";
-  dashboardSubtitle = "trevato.dev  ·  github.com/trevato";
+  dashboardName = user.username;
+  dashboardSubtitle = "${user.site}  ·  github.com/${user.github}";
 in
 {
   imports = [ inputs.nixvim.homeModules.nixvim ];

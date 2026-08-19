@@ -4,6 +4,7 @@
 {
   pkgs,
   lib,
+  user,
   ...
 }:
 let
@@ -13,8 +14,8 @@ in
   imports = [ ./nixvim.nix ];
 
   home.stateVersion = "25.11";
-  home.username = "trevato";
-  home.homeDirectory = if isDarwin then "/Users/trevato" else "/home/trevato";
+  home.username = user.username;
+  home.homeDirectory = if isDarwin then "/Users/${user.username}" else "/home/${user.username}";
 
   # Tracking nixpkgs-unstable; home-manager/nixvim version strings lag behind.
   # Silence the cosmetic release-mismatch check.
@@ -78,8 +79,9 @@ in
       gcb = "git checkout -b";
       glog = "git log --oneline --graph --decorate -20";
 
-      # Nix
-      nfu = "nix flake update --flake ~/dotfiles";
+      # This repo — recipes live in the justfile; `just` lists them
+      nrs = "just --justfile ~/dotfiles/justfile switch";
+      nfu = "just --justfile ~/dotfiles/justfile update";
 
       # Docker
       d = "docker";
@@ -102,12 +104,6 @@ in
       lg = "lazygit";
       ".." = "cd ..";
       "..." = "cd ../..";
-    }
-    // lib.optionalAttrs isDarwin {
-      nrs = "sudo darwin-rebuild switch --flake ~/dotfiles";
-    }
-    // lib.optionalAttrs (!isDarwin) {
-      hms = "home-manager switch -b backup --flake ~/dotfiles#trevato@${pkgs.stdenv.hostPlatform.system}";
     };
 
     initContent = ''
@@ -332,8 +328,8 @@ in
   programs.git = {
     enable = true;
     settings = {
-      user.name = "trevato";
-      user.email = "me@trevato.dev";
+      user.name = user.name;
+      user.email = user.email;
       init.defaultBranch = "main";
       pull.rebase = true;
       push.autoSetupRemote = true;
