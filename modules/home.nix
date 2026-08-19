@@ -11,7 +11,10 @@ let
   isDarwin = pkgs.stdenv.isDarwin;
 in
 {
-  imports = [ ./nixvim.nix ];
+  imports = [
+    ./nixvim.nix
+    ./claude.nix
+  ];
 
   home.stateVersion = "25.11";
   home.username = user.username;
